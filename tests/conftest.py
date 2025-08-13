@@ -36,6 +36,6 @@ mock_tkinter.messagebox.showerror = MagicMock()
 mock_tkinter.messagebox.showwarning = MagicMock()
 
 # Replace the modules in sys.modules
-sys.modules['customtkinter'] = mock_ctk
-sys.modules['tkinter'] = mock_tkinter
-sys.modules['tkinter.messagebox'] = mock_tkinter.messagebox
+sys.modules["customtkinter"] = mock_ctk
+sys.modules["tkinter"] = mock_tkinter
+sys.modules["tkinter.messagebox"] = mock_tkinter.messagebox

@@ -35,7 +35,7 @@ class TestApplication:
 
         assert self.app.root is not None
         # Check that root has the expected attributes instead of checking type
-        assert hasattr(self.app.root, 'title')
+        assert hasattr(self.app.root, "title")
         assert self.app.root.title() == "Announcemint"
         # CustomTkinter may not set geometry immediately, so just check it's a CTk window
 
