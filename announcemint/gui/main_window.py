@@ -4,6 +4,8 @@ from tkinter import messagebox
 from typing import Any
 
 import customtkinter as ctk
+from announcemint.utils.aws_helpers import get_aws_credentials
+from announcemint.gui.aws_modal import AWSCredentialsModal
 
 
 class MainWindow:
@@ -16,7 +18,9 @@ class MainWindow:
             parent: The parent CustomTkinter widget.
         """
         self.parent = parent
+        self.aws_credentials = None
         self.setup_ui()
+        self.check_aws_credentials()
 
     def setup_ui(self) -> None:
         """Set up the user interface."""
@@ -91,6 +95,9 @@ class MainWindow:
         )
         self.clear_btn.pack(side="left")
 
+        # AWS Section
+        self.create_aws_section(left_frame)
+
         # Right column
         right_frame = ctk.CTkFrame(self.main_frame)
         right_frame.grid(row=1, column=1, sticky="nsew", padx=(10, 0))
@@ -155,3 +162,76 @@ class MainWindow:
         self.input_entry.delete(0, "end")
         self.output_text.delete("1.0", "end")
         self.status_var.set("Ready")
+
+    def create_aws_section(self, parent) -> None:
+        """Create the AWS credentials section."""
+        # AWS section frame
+        aws_frame = ctk.CTkFrame(parent)
+        aws_frame.pack(fill="x", padx=20, pady=(20, 0))
+
+        # AWS section title
+        aws_title = ctk.CTkLabel(
+            aws_frame, text="AWS Integration", font=ctk.CTkFont(size=16, weight="bold")
+        )
+        aws_title.pack(anchor="w", padx=20, pady=(20, 15))
+
+        # AWS status
+        self.aws_status_label = ctk.CTkLabel(
+            aws_frame, text="Checking credentials...", text_color="gray"
+        )
+        self.aws_status_label.pack(anchor="w", padx=20, pady=(0, 15))
+
+        # AWS buttons frame
+        aws_button_frame = ctk.CTkFrame(aws_frame)
+        aws_button_frame.pack(fill="x", padx=20, pady=(0, 20))
+
+        # Check credentials button
+        self.check_aws_btn = ctk.CTkButton(
+            aws_button_frame, text="Check Credentials", command=self.check_aws_credentials
+        )
+        self.check_aws_btn.pack(side="left", padx=(0, 10))
+
+        # Manage credentials button
+        self.manage_aws_btn = ctk.CTkButton(
+            aws_button_frame, text="Manage Credentials", command=self.manage_aws_credentials
+        )
+        self.manage_aws_btn.pack(side="left")
+
+    def check_aws_credentials(self) -> None:
+        """Check for existing AWS credentials in environment."""
+        self.aws_credentials = get_aws_credentials()
+        
+        if self.aws_credentials:
+            self.aws_status_label.configure(
+                text=f"✅ Credentials found for region: {self.aws_credentials['region_name']}",
+                text_color="green"
+            )
+            self.check_aws_btn.configure(text="Refresh Credentials")
+        else:
+            self.aws_status_label.configure(
+                text="❌ No AWS credentials found in environment",
+                text_color="red"
+            )
+            self.check_aws_btn.configure(text="Check Credentials")
+
+    def manage_aws_credentials(self) -> None:
+        """Open the AWS credentials management modal."""
+        modal = AWSCredentialsModal(self.parent, self.on_aws_credentials_saved)
+        result = modal.show()
+        
+        if result:
+            self.aws_credentials = result
+            self.aws_status_label.configure(
+                text=f"✅ Credentials saved for region: {result['region_name']}",
+                text_color="green"
+            )
+            self.check_aws_btn.configure(text="Refresh Credentials")
+            
+            # Update output with success message
+            self.output_text.insert("end", f"AWS credentials saved successfully for region: {result['region_name']}\n")
+            self.output_text.see("end")
+
+    def on_aws_credentials_saved(self, credentials) -> None:
+        """Callback when AWS credentials are saved."""
+        # This method is called by the modal when credentials are saved
+        pass
