@@ -45,16 +45,44 @@ class MainWindow:
         header_frame = ctk.CTkFrame(self.main_frame)
         header_frame.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 20))
 
+        # Title with icon
+        title_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
+        title_frame.pack(pady=10)
+        
+        # Icon (if available)
+        try:
+            from PIL import Image, ImageTk
+            import os
+            
+            icon_path = os.path.join(os.path.dirname(__file__), "..", "assets", "icon.svg")
+            if os.path.exists(icon_path):
+                # For SVG, we'll use a placeholder or convert if needed
+                # For now, let's create a simple icon label
+                icon_label = ctk.CTkLabel(
+                    title_frame, 
+                    text="🎯", 
+                    font=ctk.CTkFont(size=32)
+                )
+                icon_label.pack(side="left", padx=(0, 15))
+        except ImportError:
+            # Fallback to emoji if PIL not available
+            icon_label = ctk.CTkLabel(
+                title_frame, 
+                text="🎯", 
+                font=ctk.CTkFont(size=32)
+            )
+            icon_label.pack(side="left", padx=(0, 15))
+        
         # Title
         title_label = ctk.CTkLabel(
-            header_frame, text="Announcemint", font=ctk.CTkFont(size=24, weight="bold")
+            title_frame, text="Announcemint", font=ctk.CTkFont(size=24, weight="bold")
         )
-        title_label.pack(pady=10)
+        title_label.pack(side="left")
 
         # Subtitle
         subtitle_label = ctk.CTkLabel(
             header_frame,
-            text="Cross-platform Python GUI Application",
+            text="A simple and robust prompt generator",
             font=ctk.CTkFont(size=14),
             text_color="gray",
         )

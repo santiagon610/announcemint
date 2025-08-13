@@ -30,9 +30,23 @@ class Application:
 
         # Set window icon if available
         try:
-            # You can add an icon file here
-            # self.root.iconbitmap("path/to/icon.ico")
-            pass
+            import os
+            icon_path = os.path.join(os.path.dirname(__file__), "assets", "icon.svg")
+            if os.path.exists(icon_path):
+                # For SVG files, we'll need to convert or use a different approach
+                # For now, let's try to set it directly (may work on some systems)
+                try:
+                    self.root.iconbitmap(icon_path)
+                except Exception:
+                    # Fallback: try to set icon using photoimage
+                    try:
+                        from PIL import Image, ImageTk
+                        img = Image.open(icon_path)
+                        # Convert SVG to PNG if needed, or use as-is
+                        photo = ImageTk.PhotoImage(img)
+                        self.root.iconphoto(True, photo)
+                    except Exception:
+                        pass
         except Exception:
             pass
 

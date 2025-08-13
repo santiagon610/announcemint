@@ -31,12 +31,15 @@ class AWSCredentialsModal:
         
         # Make modal modal (block parent interaction)
         self.modal.transient(parent)
-        self.modal.grab_set()
         
         # Center modal on parent
         self.center_modal()
         
         self.setup_ui()
+        
+        # Set grab after UI is set up and window is visible
+        self.modal.update_idletasks()
+        self.modal.grab_set()
         
     def center_modal(self):
         """Center the modal on the parent window."""
