@@ -2,7 +2,7 @@
 
 import os
 import sys
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -29,7 +29,7 @@ class TestGetResourcePath:
         """Test getting resource path in PyInstaller mode."""
         # Mock the sys._MEIPASS attribute by temporarily adding it
         original_sys = sys.__dict__.copy()
-        sys._MEIPASS = "/tmp/pyinstaller"
+        sys._MEIPASS = "/tmp/pyinstaller"  # type: ignore
         try:
             result = get_resource_path("test.txt")
             expected = "/tmp/pyinstaller/test.txt"
@@ -77,7 +77,7 @@ class TestGetAppDataDir:
 
     @patch("sys.platform", "darwin")
     @patch("os.path.expanduser")
-    def test_macos_path(self, mock_expanduser: str) -> None:
+    def test_macos_path(self, mock_expanduser: MagicMock) -> None:
         """Test getting app data directory on macOS."""
         mock_expanduser.return_value = "/Users/test"
         result = get_app_data_dir()
@@ -86,7 +86,7 @@ class TestGetAppDataDir:
 
     @patch("sys.platform", "linux")
     @patch("os.path.expanduser")
-    def test_linux_path(self, mock_expanduser: str) -> None:
+    def test_linux_path(self, mock_expanduser: MagicMock) -> None:
         """Test getting app data directory on Linux."""
         mock_expanduser.return_value = "/home/test"
         result = get_app_data_dir()
