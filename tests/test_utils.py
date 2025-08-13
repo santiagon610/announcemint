@@ -33,7 +33,8 @@ class TestGetResourcePath:
         try:
             result = get_resource_path("test.txt")
             expected = "/tmp/pyinstaller/test.txt"
-            assert result == expected
+            # Normalize paths to handle different path separator representations
+            assert os.path.normpath(result) == os.path.normpath(expected)
         finally:
             # Restore original sys state
             sys.__dict__.clear()
@@ -73,7 +74,8 @@ class TestGetAppDataDir:
         result = get_app_data_dir()
         # Use os.path.join to handle path separators correctly
         expected = os.path.join("C:\\Users\\Test\\AppData\\Roaming", "Announcemint")
-        assert result == expected
+        # Normalize paths to handle different path separator representations
+        assert os.path.normpath(result) == os.path.normpath(expected)
 
     @patch("sys.platform", "darwin")
     @patch("os.path.expanduser")
@@ -82,7 +84,8 @@ class TestGetAppDataDir:
         mock_expanduser.return_value = "/Users/test"
         result = get_app_data_dir()
         expected = "/Users/test/Library/Application Support/Announcemint"
-        assert result == expected
+        # Normalize paths to handle different path separator representations
+        assert os.path.normpath(result) == os.path.normpath(expected)
 
     @patch("sys.platform", "linux")
     @patch("os.path.expanduser")
@@ -91,7 +94,8 @@ class TestGetAppDataDir:
         mock_expanduser.return_value = "/home/test"
         result = get_app_data_dir()
         expected = "/home/test/.config/announcemint"
-        assert result == expected
+        # Normalize paths to handle different path separator representations
+        assert os.path.normpath(result) == os.path.normpath(expected)
 
 
 class TestPlatformDetection:
