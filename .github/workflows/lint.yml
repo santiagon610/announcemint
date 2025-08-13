@@ -133,7 +133,7 @@ jobs:
             if (mypyOutput.indexOf('error:') !== -1) hasIssues = true;
             
             // Create comment content
-            var commentBody = '## 🔍 Linter Report for ' + context.job + ' (' + context.runner.os + ' - Python ' + context.runner.pythonVersion + ')\n\n';
+            var commentBody = '## 🔍 Linter Report for ' + context.job + ' (' + context.matrix.os + ' - Python ' + context.matrix.python-version + ')\n\n';
             
             if (!hasIssues) {
               commentBody += '✅ **All linters passed successfully!**\n\n';
