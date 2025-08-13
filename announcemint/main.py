@@ -59,7 +59,8 @@ class Application:
         """Handle application closing."""
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             self.cleanup()
-            self.root.destroy()
+            if self.root:
+                self.root.destroy()
 
     def cleanup(self) -> None:
         """Clean up resources before exit."""
