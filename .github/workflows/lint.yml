@@ -97,6 +97,9 @@ jobs:
       - name: Create Linter Report Comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
+        env:
+          RUNNER_OS: ${{ runner.os }}
+          PYTHON_VERSION: ${{ matrix.python-version }}
         with:
           script: |
             var fs = require('fs');
@@ -132,8 +135,8 @@ jobs:
             if (flake8StyleOutput.indexOf('error:') !== -1) hasIssues = true;
             if (mypyOutput.indexOf('error:') !== -1) hasIssues = true;
             
-            // Create comment content
-            var commentBody = '## 🔍 Linter Report for ' + context.job + ' (' + context.matrix.os + ' - Python ' + context.matrix.python-version + ')\n\n';
+            // Create comment content using environment variables
+            var commentBody = '## 🔍 Linter Report for ' + context.job + ' (' + process.env.RUNNER_OS + ' - Python ' + process.env.PYTHON_VERSION + ')\n\n';
             
             if (!hasIssues) {
               commentBody += '✅ **All linters passed successfully!**\n\n';
