@@ -96,9 +96,7 @@ pub fn build_proxy_url(c: &AppConfig) -> Option<String> {
 
 pub fn config_to_credential_options(c: &AppConfig) -> AwsCredentialOptions {
     let use_manual = c.aws_use_manual.unwrap_or_else(|| {
-        c.aws_access_key_id
-            .as_ref()
-            .is_some_and(|s| !s.is_empty())
+        c.aws_access_key_id.as_ref().is_some_and(|s| !s.is_empty())
             && c.aws_secret_access_key
                 .as_ref()
                 .is_some_and(|s| !s.is_empty())

@@ -50,12 +50,8 @@ pub async fn load_sdk_config_with_options(
     let region = aws_config::Region::new(region);
 
     if let Some(o) = opts {
-        let use_manual = o.access_key_id
-            .as_ref()
-            .is_some_and(|s| !s.is_empty())
-            && o.secret_access_key
-                .as_ref()
-                .is_some_and(|s| !s.is_empty());
+        let use_manual = o.access_key_id.as_ref().is_some_and(|s| !s.is_empty())
+            && o.secret_access_key.as_ref().is_some_and(|s| !s.is_empty());
         if use_manual {
             let creds = Credentials::new(
                 o.access_key_id.as_deref().unwrap_or(""),
