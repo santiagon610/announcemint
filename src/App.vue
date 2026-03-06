@@ -13,7 +13,9 @@ const promptLines = ref("");
 const voiceId = ref("Joanna");
 const engine = ref<string>("neural");
 const languageCode = ref("system");
-const voices = ref<Array<{ id: string; name: string; language_code: string }>>([]);
+const voices = ref<Array<{ id: string; name: string; language_code: string }>>(
+  [],
+);
 const currentView = ref<"main" | "settings">("main");
 const generating = ref(false);
 const progress = ref<{ current: number; total: number } | null>(null);
@@ -55,7 +57,8 @@ interface CredentialsAndPermissionsResult {
   public_ip?: string;
   permissions: PermissionStatus[];
 }
-const credentialsAndPermissionsResult = ref<CredentialsAndPermissionsResult | null>(null);
+const credentialsAndPermissionsResult =
+  ref<CredentialsAndPermissionsResult | null>(null);
 const checkingCredentials = ref(false);
 const awsRegionsList = ref<string[]>([]);
 const showAbout = ref(false);
@@ -65,25 +68,47 @@ const rememberPrompts = ref(true);
 const promptFileNameFormat = ref("hyphen");
 
 const promptFileNameFormatOptions = [
-  { value: "none", label: "Prompt name, no formatting changes (e.g. \"North Dispatch 1.ogg\")" },
-  { value: "hyphen", label: "Hyphens, unmodified case (e.g. \"North-Dispatch-1.ogg\")" },
-  { value: "hyphen_lower", label: "Hyphens, lower case (e.g. \"north-dispatch-1.ogg\")" },
-  { value: "hyphen_upper", label: "Hyphens, upper case (e.g. \"NORTH-DISPATCH-1.ogg\")" },
-  { value: "underscore", label: "Underscores, unmodified case (e.g. \"North_Dispatch_1.ogg\")" },
-  { value: "underscore_lower", label: "Underscores, lower case (e.g. \"north_dispatch_1.ogg\")" },
-  { value: "underscore_upper", label: "Underscores, upper case (e.g. \"NORTH_DISPATCH_1.ogg\")" },
+  {
+    value: "none",
+    label: 'Prompt name, no formatting changes (e.g. "North Dispatch 1.ogg")',
+  },
+  {
+    value: "hyphen",
+    label: 'Hyphens, unmodified case (e.g. "North-Dispatch-1.ogg")',
+  },
+  {
+    value: "hyphen_lower",
+    label: 'Hyphens, lower case (e.g. "north-dispatch-1.ogg")',
+  },
+  {
+    value: "hyphen_upper",
+    label: 'Hyphens, upper case (e.g. "NORTH-DISPATCH-1.ogg")',
+  },
+  {
+    value: "underscore",
+    label: 'Underscores, unmodified case (e.g. "North_Dispatch_1.ogg")',
+  },
+  {
+    value: "underscore_lower",
+    label: 'Underscores, lower case (e.g. "north_dispatch_1.ogg")',
+  },
+  {
+    value: "underscore_upper",
+    label: 'Underscores, upper case (e.g. "NORTH_DISPATCH_1.ogg")',
+  },
 ];
 
 const linesList = computed(() =>
   promptLines.value
     .split("\n")
     .map((l) => l.trim())
-    .filter(Boolean)
+    .filter(Boolean),
 );
 const totalLines = computed(() => linesList.value.length);
 
 function getSystemLanguageCode(): string {
-  const locale = typeof navigator !== "undefined" ? navigator.language : "en-US";
+  const locale =
+    typeof navigator !== "undefined" ? navigator.language : "en-US";
   const lower = locale.toLowerCase();
   if (lower.startsWith("en-gb")) return "en-GB";
   if (lower.startsWith("en")) return "en-US";
@@ -93,21 +118,26 @@ function getSystemLanguageCode(): string {
   return "en-US";
 }
 const effectiveLanguageCode = computed(() =>
-  languageCode.value === "system" ? getSystemLanguageCode() : languageCode.value
+  languageCode.value === "system"
+    ? getSystemLanguageCode()
+    : languageCode.value,
 );
 
 const authStatusIndicator = computed<"green" | "yellow" | "red" | null>(() => {
   const r = credentialsAndPermissionsResult.value;
   if (!r) return null;
   if (!r.authenticated) return "red";
-  const allGranted = r.permissions.length > 0 && r.permissions.every((p) => p.granted);
+  const allGranted =
+    r.permissions.length > 0 && r.permissions.every((p) => p.granted);
   return allGranted ? "green" : "yellow";
 });
 
 const authStatusTooltip = computed(() => {
   const s = authStatusIndicator.value;
-  if (s === "green") return "Able to authenticate to AWS and all needed IAM permissions are granted";
-  if (s === "yellow") return "Able to authenticate to AWS, but not all necessary permissions are granted";
+  if (s === "green")
+    return "Able to authenticate to AWS and all needed IAM permissions are granted";
+  if (s === "yellow")
+    return "Able to authenticate to AWS, but not all necessary permissions are granted";
   if (s === "red") return "Unable to connect or authenticate to AWS";
   return "AWS status unknown";
 });
@@ -137,7 +167,11 @@ async function loadVoices() {
       languageCode: effectiveLanguageCode.value || null,
       engine: engine.value || null,
     });
-    if (voiceId.value && voices.value.length && !voices.value.some((v) => v.id === voiceId.value)) {
+    if (
+      voiceId.value &&
+      voices.value.length &&
+      !voices.value.some((v) => v.id === voiceId.value)
+    ) {
       voiceId.value = voices.value[0].id;
     }
   } catch (e) {
@@ -171,7 +205,10 @@ async function loadAwsProfiles() {
     awsProfilesList.value = await invoke<string[]>("list_aws_profiles", {
       configDir: awsConfigDir.value,
     });
-    if (awsProfilesList.value.length && !awsProfilesList.value.includes(awsProfile.value)) {
+    if (
+      awsProfilesList.value.length &&
+      !awsProfilesList.value.includes(awsProfile.value)
+    ) {
       awsProfile.value = awsProfilesList.value[0];
     }
   } catch (e) {
@@ -184,7 +221,9 @@ async function checkCredentialsAndPermissions() {
   credentialsAndPermissionsResult.value = null;
   checkingCredentials.value = true;
   try {
-    const result = await invoke<CredentialsAndPermissionsResult>("check_credentials_and_permissions");
+    const result = await invoke<CredentialsAndPermissionsResult>(
+      "check_credentials_and_permissions",
+    );
     credentialsAndPermissionsResult.value = result;
   } catch (e) {
     credentialsAndPermissionsResult.value = {
@@ -261,15 +300,17 @@ async function generate() {
   progressStepMessage.value = "";
   let unlisten: (() => void) | undefined;
   try {
-    unlisten = await listen<{ prompt_name: string; current: number; total: number; step: string }>(
-      "generate-progress",
-      (event) => {
-        const { prompt_name, current, total, step } = event.payload;
-        progress.value = { current, total };
-        progressPromptName.value = prompt_name;
-        progressStepMessage.value = stepToLabel(step);
-      }
-    );
+    unlisten = await listen<{
+      prompt_name: string;
+      current: number;
+      total: number;
+      step: string;
+    }>("generate-progress", (event) => {
+      const { prompt_name, current, total, step } = event.payload;
+      progress.value = { current, total };
+      progressPromptName.value = prompt_name;
+      progressStepMessage.value = stepToLabel(step);
+    });
     await checkSession();
     if (!sessionOk.value) return;
     const existing = await invoke<string[]>("check_destination_paths", {
@@ -280,7 +321,12 @@ async function generate() {
     if (existing.length > 0) {
       const overwrite = await confirm(
         `${existing.length} file(s) already exist and will be overwritten. Continue?`,
-        { title: "Overwrite files?", kind: "warning", okLabel: "Overwrite", cancelLabel: "Cancel" }
+        {
+          title: "Overwrite files?",
+          kind: "warning",
+          okLabel: "Overwrite",
+          cancelLabel: "Cancel",
+        },
       );
       if (!overwrite) {
         return;
@@ -333,7 +379,10 @@ async function loadConfig() {
     }>("get_config");
     if (c?.language_code) languageCode.value = c.language_code;
     else languageCode.value = "system";
-    const effective = languageCode.value === "system" ? getSystemLanguageCode() : languageCode.value;
+    const effective =
+      languageCode.value === "system"
+        ? getSystemLanguageCode()
+        : languageCode.value;
     if (c?.voice_id) voiceId.value = c.voice_id;
     else voiceId.value = effective === "en-US" ? "Joanna" : "";
     if (c?.engine) engine.value = c.engine;
@@ -343,31 +392,45 @@ async function loadConfig() {
     if (c?.output_dir) outputDir.value = c.output_dir;
     if (c?.remember_prompts != null) rememberPrompts.value = c.remember_prompts;
     else rememberPrompts.value = true;
-    if (rememberPrompts.value && c?.prompt_lines != null) promptLines.value = c.prompt_lines;
-    if (c?.prompt_file_name_format != null) promptFileNameFormat.value = c.prompt_file_name_format;
+    if (rememberPrompts.value && c?.prompt_lines != null)
+      promptLines.value = c.prompt_lines;
+    if (c?.prompt_file_name_format != null)
+      promptFileNameFormat.value = c.prompt_file_name_format;
     else promptFileNameFormat.value = "hyphen";
-    if (c?.aws_proxy_enabled != null) awsProxyEnabled.value = c.aws_proxy_enabled;
+    if (c?.aws_proxy_enabled != null)
+      awsProxyEnabled.value = c.aws_proxy_enabled;
     else awsProxyEnabled.value = false;
-    if (c?.aws_proxy_protocol === "https" || c?.aws_proxy_protocol === "socks") awsProxyProtocol.value = c.aws_proxy_protocol;
+    if (c?.aws_proxy_protocol === "https" || c?.aws_proxy_protocol === "socks")
+      awsProxyProtocol.value = c.aws_proxy_protocol;
     else awsProxyProtocol.value = "http";
     if (c?.aws_proxy_host != null) awsProxyHost.value = c.aws_proxy_host;
     else awsProxyHost.value = "";
     if (c?.aws_proxy_port != null) awsProxyPort.value = c.aws_proxy_port;
     else awsProxyPort.value = "";
-    if (c?.aws_proxy_username != null) awsProxyUsername.value = c.aws_proxy_username;
+    if (c?.aws_proxy_username != null)
+      awsProxyUsername.value = c.aws_proxy_username;
     else awsProxyUsername.value = "";
-    if (c?.aws_proxy_password != null) awsProxyPassword.value = c.aws_proxy_password;
+    if (c?.aws_proxy_password != null)
+      awsProxyPassword.value = c.aws_proxy_password;
     else awsProxyPassword.value = "";
     if (c?.aws_profile != null) awsProfile.value = c.aws_profile;
     if (c?.aws_config_dir != null) awsConfigDir.value = c.aws_config_dir;
-    if (c?.aws_region_manual != null) awsRegionManual.value = c.aws_region_manual;
+    if (c?.aws_region_manual != null)
+      awsRegionManual.value = c.aws_region_manual;
     else awsRegionManual.value = "us-east-1";
-    if (c?.aws_access_key_id != null) awsAccessKeyId.value = c.aws_access_key_id;
-    if (c?.aws_secret_access_key != null) awsSecretAccessKey.value = c.aws_secret_access_key;
-    if (c?.aws_use_manual != null) awsUseManualCredentials.value = c.aws_use_manual;
-    else awsUseManualCredentials.value = !!(c?.aws_access_key_id && c?.aws_secret_access_key);
+    if (c?.aws_access_key_id != null)
+      awsAccessKeyId.value = c.aws_access_key_id;
+    if (c?.aws_secret_access_key != null)
+      awsSecretAccessKey.value = c.aws_secret_access_key;
+    if (c?.aws_use_manual != null)
+      awsUseManualCredentials.value = c.aws_use_manual;
+    else
+      awsUseManualCredentials.value = !!(
+        c?.aws_access_key_id && c?.aws_secret_access_key
+      );
     if (!defaultAwsConfigDir.value) {
-      defaultAwsConfigDir.value = (await invoke<string | null>("get_default_aws_config_dir")) ?? null;
+      defaultAwsConfigDir.value =
+        (await invoke<string | null>("get_default_aws_config_dir")) ?? null;
     }
     await loadAwsProfiles();
     if (!c?.aws_profile) {
@@ -389,7 +452,7 @@ function saveConfig() {
       language_code: languageCode.value,
       preset_name: presetName.value,
       output_dir: outputDir.value,
-      prompt_lines: rememberPrompts.value ? (promptLines.value || null) : null,
+      prompt_lines: rememberPrompts.value ? promptLines.value || null : null,
       remember_prompts: rememberPrompts.value,
       prompt_file_name_format: promptFileNameFormat.value || null,
       aws_proxy_enabled: awsProxyEnabled.value,
@@ -434,14 +497,21 @@ watch(
   () => {
     saveConfig();
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch(
-  [awsProxyEnabled, awsProxyProtocol, awsProxyHost, awsProxyPort, awsProxyUsername, awsProxyPassword],
+  [
+    awsProxyEnabled,
+    awsProxyProtocol,
+    awsProxyHost,
+    awsProxyPort,
+    awsProxyUsername,
+    awsProxyPassword,
+  ],
   () => {
     proxyTestMessage.value = null;
-  }
+  },
 );
 
 onMounted(async () => {
@@ -479,49 +549,79 @@ onMounted(async () => {
             :class="authStatusIndicator"
             :title="authStatusTooltip"
           >
-            {{ authStatusIndicator === "green" ? "🟢" : authStatusIndicator === "yellow" ? "🟡" : "🔴" }}
+            {{
+              authStatusIndicator === "green"
+                ? "🟢"
+                : authStatusIndicator === "yellow"
+                  ? "🟡"
+                  : "🔴"
+            }}
           </span>
-          <button type="button" class="btn-secondary" @click="openUrl(HELP_DOCS_URL).catch(console.error)">Help</button>
-          <button type="button" class="btn-secondary" @click="currentView = 'settings'">Settings</button>
+          <button
+            type="button"
+            class="btn-secondary"
+            @click="openUrl(HELP_DOCS_URL).catch(console.error)"
+          >
+            Help
+          </button>
+          <button
+            type="button"
+            class="btn-secondary"
+            @click="currentView = 'settings'"
+          >
+            Settings
+          </button>
         </span>
       </header>
 
       <main class="main">
-      <div class="form-row">
-        <label>Prompts (one per line)</label>
-        <textarea
-          v-model="promptLines"
-          class="prompts-input"
-          placeholder="Primary Zone&#10;Dispatch&#10;North Police 1&#10;North Police 2&#10;South Police 1&#10;South Police 2&#10;..."
-          rows="12"
-        />
-      </div>
-      <div class="actions">
-        <button
-          type="button"
-          class="btn-primary"
-          :disabled="generating || !outputDir || totalLines === 0 || !voiceId"
-          @click="generate"
-        >
-          {{ generating ? "Generating…" : "Generate Prompts" }}
-        </button>
-      </div>
-      <div v-if="progress" class="progress-panel">
-        <p v-if="progressPromptName" class="progress-prompt-name">{{ progressPromptName }}</p>
-        <div class="progress-bar-wrap">
-          <div
-            class="progress-bar-fill"
-            :style="{ width: progress.total ? `${(100 * progress.current) / progress.total}%` : '0%' }"
+        <div class="form-row">
+          <label>Prompts (one per line)</label>
+          <textarea
+            v-model="promptLines"
+            class="prompts-input"
+            placeholder="Primary Zone&#10;Dispatch&#10;North Police 1&#10;North Police 2&#10;South Police 1&#10;South Police 2&#10;..."
+            rows="12"
           />
         </div>
-        <p class="progress-count">{{ progress.current }} / {{ progress.total }}</p>
-        <p v-if="progressStepMessage" class="progress-step-message">{{ progressStepMessage }}</p>
-      </div>
-      <p v-if="error" class="error">{{ error }}</p>
+        <div class="actions">
+          <button
+            type="button"
+            class="btn-primary"
+            :disabled="generating || !outputDir || totalLines === 0 || !voiceId"
+            @click="generate"
+          >
+            {{ generating ? "Generating…" : "Generate Prompts" }}
+          </button>
+        </div>
+        <div v-if="progress" class="progress-panel">
+          <p v-if="progressPromptName" class="progress-prompt-name">
+            {{ progressPromptName }}
+          </p>
+          <div class="progress-bar-wrap">
+            <div
+              class="progress-bar-fill"
+              :style="{
+                width: progress.total
+                  ? `${(100 * progress.current) / progress.total}%`
+                  : '0%',
+              }"
+            />
+          </div>
+          <p class="progress-count">
+            {{ progress.current }} / {{ progress.total }}
+          </p>
+          <p v-if="progressStepMessage" class="progress-step-message">
+            {{ progressStepMessage }}
+          </p>
+        </div>
+        <p v-if="error" class="error">{{ error }}</p>
       </main>
 
       <footer class="footer">
-        <button type="button" class="footer-link" @click="showAbout = true">About</button>
+        <button type="button" class="footer-link" @click="showAbout = true">
+          About
+        </button>
       </footer>
     </template>
 
@@ -529,7 +629,9 @@ onMounted(async () => {
     <template v-if="currentView === 'settings'">
       <header class="header settings-header">
         <h1 class="settings-title">Settings</h1>
-        <button type="button" class="btn-primary" @click="currentView = 'main'">Return</button>
+        <button type="button" class="btn-primary" @click="currentView = 'main'">
+          Return
+        </button>
       </header>
 
       <div class="settings-page">
@@ -542,7 +644,12 @@ onMounted(async () => {
             @click="openDrawer = openDrawer === 'aws' ? null : 'aws'"
           >
             <h2 class="drawer-title">Connecting to AWS</h2>
-            <span class="drawer-chevron" :class="{ open: openDrawer === 'aws' }" aria-hidden="true">▼</span>
+            <span
+              class="drawer-chevron"
+              :class="{ open: openDrawer === 'aws' }"
+              aria-hidden="true"
+              >▼</span
+            >
           </button>
           <div v-show="openDrawer === 'aws'" class="drawer-body">
             <h3 class="drawer-section-title">Network Proxy</h3>
@@ -609,7 +716,12 @@ onMounted(async () => {
                   {{ testingProxy ? "Testing…" : "Test proxy" }}
                 </button>
               </div>
-              <p v-if="proxyTestMessage" :class="proxyTestMessage.ok ? 'proxy-test-ok' : 'credentials-error'">
+              <p
+                v-if="proxyTestMessage"
+                :class="
+                  proxyTestMessage.ok ? 'proxy-test-ok' : 'credentials-error'
+                "
+              >
                 {{ proxyTestMessage.text }}
               </p>
             </div>
@@ -622,14 +734,22 @@ onMounted(async () => {
               <div class="toggle-buttons">
                 <button
                   type="button"
-                  :class="['btn-secondary', 'toggle-btn', { active: !awsUseManualCredentials }]"
+                  :class="[
+                    'btn-secondary',
+                    'toggle-btn',
+                    { active: !awsUseManualCredentials },
+                  ]"
                   @click="awsUseManualCredentials = false"
                 >
                   AWS config file
                 </button>
                 <button
                   type="button"
-                  :class="['btn-secondary', 'toggle-btn', { active: awsUseManualCredentials }]"
+                  :class="[
+                    'btn-secondary',
+                    'toggle-btn',
+                    { active: awsUseManualCredentials },
+                  ]"
                   @click="awsUseManualCredentials = true"
                 >
                   Manual credentials
@@ -642,16 +762,28 @@ onMounted(async () => {
                 <div class="form-row">
                   <label>AWS Region</label>
                   <select v-model="awsRegionManual">
-                    <option v-for="r in awsRegionsList" :key="r" :value="r">{{ r }}</option>
+                    <option v-for="r in awsRegionsList" :key="r" :value="r">
+                      {{ r }}
+                    </option>
                   </select>
                 </div>
                 <div class="form-row">
                   <label>Access Key ID</label>
-                  <input v-model="awsAccessKeyId" type="text" placeholder="AKIA…" autocomplete="off" />
+                  <input
+                    v-model="awsAccessKeyId"
+                    type="text"
+                    placeholder="AKIA…"
+                    autocomplete="off"
+                  />
                 </div>
                 <div class="form-row">
                   <label>Secret Access Key</label>
-                  <input v-model="awsSecretAccessKey" type="password" placeholder="…" autocomplete="off" />
+                  <input
+                    v-model="awsSecretAccessKey"
+                    type="password"
+                    placeholder="…"
+                    autocomplete="off"
+                  />
                 </div>
               </div>
             </template>
@@ -660,14 +792,25 @@ onMounted(async () => {
                 <div class="form-row">
                   <label>Config directory</label>
                   <div class="row-actions row-actions-wrap">
-                    <span class="config-dir-display">{{ awsConfigDir || defaultAwsConfigDir || "Default (~/.aws)" }}</span>
+                    <span class="config-dir-display">{{
+                      awsConfigDir || defaultAwsConfigDir || "Default (~/.aws)"
+                    }}</span>
                     <span class="row-buttons">
-                      <button type="button" class="btn-secondary" @click="pickAwsConfigDir">Browse…</button>
+                      <button
+                        type="button"
+                        class="btn-secondary"
+                        @click="pickAwsConfigDir"
+                      >
+                        Browse…
+                      </button>
                       <button
                         v-if="awsConfigDir"
                         type="button"
                         class="btn-link btn-link-small"
-                        @click="awsConfigDir = null; loadAwsProfiles()"
+                        @click="
+                          awsConfigDir = null;
+                          loadAwsProfiles();
+                        "
                       >
                         Use default
                       </button>
@@ -678,7 +821,9 @@ onMounted(async () => {
                   <label>Profile</label>
                   <select v-model="awsProfile">
                     <option value="">— Use default / environment —</option>
-                    <option v-for="p in awsProfilesList" :key="p" :value="p">{{ p }}</option>
+                    <option v-for="p in awsProfilesList" :key="p" :value="p">
+                      {{ p }}
+                    </option>
                   </select>
                 </div>
               </div>
@@ -691,16 +836,30 @@ onMounted(async () => {
                 :disabled="checkingCredentials"
                 @click="checkCredentialsAndPermissions"
               >
-                {{ checkingCredentials ? "Checking…" : "Check credentials and permissions" }}
+                {{
+                  checkingCredentials
+                    ? "Checking…"
+                    : "Check credentials and permissions"
+                }}
               </button>
             </div>
-            <div v-if="credentialsAndPermissionsResult" class="credentials-result">
-              <p v-if="credentialsAndPermissionsResult.error" class="credentials-error">{{ credentialsAndPermissionsResult.error }}</p>
+            <div
+              v-if="credentialsAndPermissionsResult"
+              class="credentials-result"
+            >
+              <p
+                v-if="credentialsAndPermissionsResult.error"
+                class="credentials-error"
+              >
+                {{ credentialsAndPermissionsResult.error }}
+              </p>
               <table class="credentials-table">
                 <tbody>
                   <tr>
                     <th>Config file</th>
-                    <td>{{ credentialsAndPermissionsResult.config_source ?? "—" }}</td>
+                    <td>
+                      {{ credentialsAndPermissionsResult.config_source ?? "—" }}
+                    </td>
                   </tr>
                   <tr>
                     <th>Region</th>
@@ -708,32 +867,48 @@ onMounted(async () => {
                   </tr>
                   <tr>
                     <th>User ID</th>
-                    <td>{{ credentialsAndPermissionsResult.user_id ?? "—" }}</td>
+                    <td>
+                      {{ credentialsAndPermissionsResult.user_id ?? "—" }}
+                    </td>
                   </tr>
                   <tr>
                     <th>Account</th>
-                    <td>{{ credentialsAndPermissionsResult.account ?? "—" }}</td>
+                    <td>
+                      {{ credentialsAndPermissionsResult.account ?? "—" }}
+                    </td>
                   </tr>
                   <tr>
                     <th>ARN</th>
-                    <td class="arn-cell"><span class="arn-text">{{ credentialsAndPermissionsResult.arn ?? "—" }}</span></td>
+                    <td class="arn-cell">
+                      <span class="arn-text">{{
+                        credentialsAndPermissionsResult.arn ?? "—"
+                      }}</span>
+                    </td>
                   </tr>
                   <tr>
                     <th>Public IP</th>
-                    <td>{{ credentialsAndPermissionsResult.public_ip ?? "—" }}</td>
+                    <td>
+                      {{ credentialsAndPermissionsResult.public_ip ?? "—" }}
+                    </td>
                   </tr>
-                  <tr v-for="p in credentialsAndPermissionsResult.permissions" :key="p.name">
+                  <tr
+                    v-for="p in credentialsAndPermissionsResult.permissions"
+                    :key="p.name"
+                  >
                     <th>{{ p.name }}</th>
                     <td>
                       <span>{{ p.granted ? "✅" : "❌" }}</span>
-                      <span v-if="!p.granted && p.hint" class="permission-hint"> {{ p.hint }}</span>
+                      <span v-if="!p.granted && p.hint" class="permission-hint">
+                        {{ p.hint }}</span
+                      >
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <p v-if="sessionOk === false" class="session-hint">
-              Configure AWS credentials above, or set AWS_PROFILE / ~/.aws/credentials.
+              Configure AWS credentials above, or set AWS_PROFILE /
+              ~/.aws/credentials.
             </p>
           </div>
         </section>
@@ -747,52 +922,57 @@ onMounted(async () => {
             @click="openDrawer = openDrawer === 'voice' ? null : 'voice'"
           >
             <h2 class="drawer-title">Voice Options</h2>
-            <span class="drawer-chevron" :class="{ open: openDrawer === 'voice' }" aria-hidden="true">▼</span>
+            <span
+              class="drawer-chevron"
+              :class="{ open: openDrawer === 'voice' }"
+              aria-hidden="true"
+              >▼</span
+            >
           </button>
           <div v-show="openDrawer === 'voice'" class="drawer-body">
-          <div class="drawer-fields">
-            <div class="form-row">
-              <label>Language</label>
-              <select v-model="languageCode" @change="loadVoices">
-                <option value="system">System locale</option>
-                <option value="en-US">English (US)</option>
-                <option value="en-GB">English (UK)</option>
-                <option value="es-US">Spanish (US)</option>
-                <option value="fr-FR">French (France)</option>
-                <option value="de-DE">German</option>
-              </select>
+            <div class="drawer-fields">
+              <div class="form-row">
+                <label>Language</label>
+                <select v-model="languageCode" @change="loadVoices">
+                  <option value="system">System locale</option>
+                  <option value="en-US">English (US)</option>
+                  <option value="en-GB">English (UK)</option>
+                  <option value="es-US">Spanish (US)</option>
+                  <option value="fr-FR">French (France)</option>
+                  <option value="de-DE">German</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Engine</label>
+                <select v-model="engine" @change="loadVoices">
+                  <option value="standard">Standard</option>
+                  <option value="neural">Neural</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Voice</label>
+                <select v-model="voiceId">
+                  <option value="">— Select voice —</option>
+                  <option v-for="v in voices" :key="v.id" :value="v.id">
+                    {{ v.name }} ({{ v.language_code }})
+                  </option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Output preset</label>
+                <select v-model="presetName">
+                  <option v-for="p in presets" :key="p.name" :value="p.name">
+                    {{ p.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="form-row form-row-checkbox">
+                <label class="checkbox-label">
+                  <input v-model="rememberPrompts" type="checkbox" />
+                  Remember prompt names after closing
+                </label>
+              </div>
             </div>
-            <div class="form-row">
-              <label>Engine</label>
-              <select v-model="engine" @change="loadVoices">
-                <option value="standard">Standard</option>
-                <option value="neural">Neural</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <label>Voice</label>
-              <select v-model="voiceId">
-                <option value="">— Select voice —</option>
-                <option v-for="v in voices" :key="v.id" :value="v.id">
-                  {{ v.name }} ({{ v.language_code }})
-                </option>
-              </select>
-            </div>
-            <div class="form-row">
-              <label>Output preset</label>
-              <select v-model="presetName">
-                <option v-for="p in presets" :key="p.name" :value="p.name">
-                  {{ p.name }}
-                </option>
-              </select>
-            </div>
-            <div class="form-row form-row-checkbox">
-              <label class="checkbox-label">
-                <input v-model="rememberPrompts" type="checkbox" />
-                Remember prompt names after closing
-              </label>
-            </div>
-          </div>
           </div>
         </section>
 
@@ -802,32 +982,43 @@ onMounted(async () => {
             type="button"
             class="drawer-header"
             :aria-expanded="openDrawer === 'destination'"
-            @click="openDrawer = openDrawer === 'destination' ? null : 'destination'"
+            @click="
+              openDrawer = openDrawer === 'destination' ? null : 'destination'
+            "
           >
             <h2 class="drawer-title">Saving Prompts</h2>
-            <span class="drawer-chevron" :class="{ open: openDrawer === 'destination' }" aria-hidden="true">▼</span>
+            <span
+              class="drawer-chevron"
+              :class="{ open: openDrawer === 'destination' }"
+              aria-hidden="true"
+              >▼</span
+            >
           </button>
           <div v-show="openDrawer === 'destination'" class="drawer-body">
-          <div class="drawer-fields drawer-fields-full">
-            <div class="form-row">
-              <label>Output directory</label>
-              <button type="button" class="btn-secondary btn-full" @click="pickDir">
-                {{ outputDir || "Choose folder…" }}
-              </button>
-            </div>
-            <div class="form-row">
-              <label>Filename Formatting</label>
-              <select v-model="promptFileNameFormat">
-                <option
-                  v-for="opt in promptFileNameFormatOptions"
-                  :key="opt.value"
-                  :value="opt.value"
+            <div class="drawer-fields drawer-fields-full">
+              <div class="form-row">
+                <label>Output directory</label>
+                <button
+                  type="button"
+                  class="btn-secondary btn-full"
+                  @click="pickDir"
                 >
-                  {{ opt.label }}
-                </option>
-              </select>
+                  {{ outputDir || "Choose folder…" }}
+                </button>
+              </div>
+              <div class="form-row">
+                <label>Filename Formatting</label>
+                <select v-model="promptFileNameFormat">
+                  <option
+                    v-for="opt in promptFileNameFormatOptions"
+                    :key="opt.value"
+                    :value="opt.value"
+                  >
+                    {{ opt.label }}
+                  </option>
+                </select>
+              </div>
             </div>
-          </div>
           </div>
         </section>
       </div>
@@ -847,17 +1038,30 @@ onMounted(async () => {
         <p class="about-version">Version {{ appVersion || "…" }}</p>
         <p class="about-copyright">Nicholas Santiago</p>
         <p class="about-license">
-          This program is free software: you can redistribute it and/or modify it under the terms of the
-          <a href="https://www.gnu.org/licenses/gpl-3.0.html" @click="openExternal">GNU General Public License</a>
-          as published by the Free Software Foundation, version 3 or later. See the LICENSE file in the source distribution.
+          This program is free software: you can redistribute it and/or modify
+          it under the terms of the
+          <a
+            href="https://www.gnu.org/licenses/gpl-3.0.html"
+            @click="openExternal"
+            >GNU General Public License</a
+          >
+          as published by the Free Software Foundation, version 3 or later. See
+          the LICENSE file in the source distribution.
         </p>
         <p class="about-warranty">
-          This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY.
+          This program is distributed in the hope that it will be useful, but
+          WITHOUT ANY WARRANTY.
         </p>
         <p class="about-github">
           <a :href="GITHUB_REPO" @click="openExternal">GitHub</a>
         </p>
-        <button type="button" class="btn-secondary about-close" @click="showAbout = false">Close</button>
+        <button
+          type="button"
+          class="btn-secondary about-close"
+          @click="showAbout = false"
+        >
+          Close
+        </button>
       </div>
     </div>
   </div>

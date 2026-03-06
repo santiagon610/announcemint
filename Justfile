@@ -11,6 +11,10 @@ gui:
     cargo build --manifest-path src-tauri/Cargo.toml
     npm run tauri dev
 
+gui-build-macos:
+    cargo build --manifest-path src-tauri/Cargo.toml
+    npm run tauri build -- --bundles app
+
 # Run the CLI. Pass arguments after the recipe, e.g.:
 #   just cli generate --output-dir ./out --text "Hello"
 #   just cli generate --output-dir ./out --file prompts.txt --preset "Two-Way Voice Prompt"
@@ -30,3 +34,4 @@ cleanup:
 
 fmt:
     cargo fmt --all --manifest-path src-tauri/Cargo.toml
+    npm run format

@@ -1,4 +1,8 @@
-name: CI
+name: Continuous Integration
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 on:
   push:
@@ -10,6 +14,7 @@ on:
 
 jobs:
   lint-and-test:
+    name: Lint and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,6 +48,7 @@ jobs:
         continue-on-error: true
 
   semantic-pr:
+    name: Semantic pull request verification
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
@@ -63,8 +69,10 @@ jobs:
             chore
 
   build-windows:
+    name: Build app for Windows
     runs-on: windows-latest
     if: github.event_name == 'pull_request'
+    needs: lint-and-test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -78,8 +86,10 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ""
 
   build-macos:
+    name: Build app for macOS
     runs-on: macos-latest
     if: github.event_name == 'pull_request'
+    needs: lint-and-test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -91,8 +101,10 @@ jobs:
       - run: npm run tauri build -- --bundles app
 
   build-linux:
+    name: Build app for Linux
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    needs: lint-and-test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
