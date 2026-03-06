@@ -248,11 +248,11 @@ pub async fn run_check_credentials_and_permissions(
         config
             .aws_access_key_id
             .as_ref()
-            .map_or(false, |s| !s.is_empty())
+            .is_some_and(|s| !s.is_empty())
             && config
                 .aws_secret_access_key
                 .as_ref()
-                .map_or(false, |s| !s.is_empty())
+                .is_some_and(|s| !s.is_empty())
     });
     let config_source = if use_manual {
         "Manual credentials".to_string()

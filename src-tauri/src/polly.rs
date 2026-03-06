@@ -50,10 +50,12 @@ pub async fn load_sdk_config_with_options(
     let region = aws_config::Region::new(region);
 
     if let Some(o) = opts {
-        let use_manual = o.access_key_id.as_ref().map_or(false, |s| !s.is_empty())
+        let use_manual = o.access_key_id
+            .as_ref()
+            .is_some_and(|s| !s.is_empty())
             && o.secret_access_key
                 .as_ref()
-                .map_or(false, |s| !s.is_empty());
+                .is_some_and(|s| !s.is_empty());
         if use_manual {
             let creds = Credentials::new(
                 o.access_key_id.as_deref().unwrap_or(""),
@@ -112,6 +114,7 @@ pub async fn build_client_with_options(
 
 /// Build a Polly client using the default credential chain (env, ~/.aws/credentials, etc.)
 /// and optional region (defaults to AWS_REGION or us-east-1).
+#[allow(dead_code)]
 pub async fn build_client(region_override: Option<&str>) -> Result<Client, String> {
     let opts = AwsCredentialOptions {
         region: region_override.map(String::from),
@@ -206,6 +209,7 @@ pub async fn describe_voices(
 }
 
 /// Sanitize a line of text for use as a filename (replace spaces with underscores, remove invalid chars).
+#[allow(dead_code)]
 pub fn sanitize_filename(text: &str) -> String {
     text.trim()
         .chars()
@@ -220,7 +224,7 @@ pub fn sanitize_filename(text: &str) -> String {
             !std::path::Path::new(&c.to_string())
                 .components()
                 .next()
-                .map_or(false, |x| matches!(x, std::path::Component::ParentDir))
+                .is_some_and(|x| matches!(x, std::path::Component::ParentDir))
         })
         .collect::<String>()
         .replace("__", "_")
@@ -254,7 +258,11 @@ pub fn format_prompt_filename(text: &str, format: Option<&str>) -> String {
             let stem = replace_spaces_and_special(s, '-');
             apply_case(&stem, format)
         }
-        "underscore" | "underscore_lower" | "underscore_upper" | _ => {
+        "underscore" | "underscore_lower" | "underscore_upper" => {
+            let stem = replace_spaces_and_special(s, '_');
+            apply_case(&stem, format)
+        }
+        _ => {
             let stem = replace_spaces_and_special(s, '_');
             apply_case(&stem, format)
         }
@@ -290,18 +298,6 @@ fn apply_case(s: &str, format: &str) -> String {
         "hyphen_lower" | "underscore_lower" => s.to_lowercase(),
         "hyphen_upper" | "underscore_upper" => s.to_uppercase(),
         _ => s.to_string(),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::sanitize_filename;
-
-    #[test]
-    fn test_sanitize_filename() {
-        assert_eq!(sanitize_filename("Hello World"), "Hello_World");
-        assert_eq!(sanitize_filename("  Tac 2  "), "Tac_2");
-        assert_eq!(sanitize_filename("Ops 1, V R S 1"), "Ops_1,_V_R_S_1");
     }
 }
 
@@ -359,4 +355,16 @@ pub async fn synthesize_line(
         .await
         .map_err(|e| e.to_string())?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sanitize_filename;
+
+    #[test]
+    fn test_sanitize_filename() {
+        assert_eq!(sanitize_filename("Hello World"), "Hello_World");
+        assert_eq!(sanitize_filename("  Tac 2  "), "Tac_2");
+        assert_eq!(sanitize_filename("Ops 1, V R S 1"), "Ops_1,_V_R_S_1");
+    }
 }

@@ -84,9 +84,9 @@ pub fn build_proxy_url(c: &AppConfig) -> Option<String> {
     };
     let user = c.aws_proxy_username.as_deref().filter(|s| !s.is_empty());
     let pass = c.aws_proxy_password.as_ref();
-    let auth = if user.is_some() || pass.as_ref().map_or(false, |s| !s.is_empty()) {
+    let auth = if user.is_some() || pass.is_some_and(|s| !s.is_empty()) {
         let u = urlencoding::encode(user.unwrap_or(""));
-        let p = urlencoding::encode(pass.as_deref().map_or("", |v| v));
+        let p = urlencoding::encode(pass.map_or("", |s| s.as_str()));
         format!("{}:{}@", u, p)
     } else {
         String::new()
@@ -98,10 +98,10 @@ pub fn config_to_credential_options(c: &AppConfig) -> AwsCredentialOptions {
     let use_manual = c.aws_use_manual.unwrap_or_else(|| {
         c.aws_access_key_id
             .as_ref()
-            .map_or(false, |s| !s.is_empty())
+            .is_some_and(|s| !s.is_empty())
             && c.aws_secret_access_key
                 .as_ref()
-                .map_or(false, |s| !s.is_empty())
+                .is_some_and(|s| !s.is_empty())
     });
     let proxy_url = build_proxy_url(c).or_else(|| c.aws_proxy_url.clone());
     AwsCredentialOptions {
