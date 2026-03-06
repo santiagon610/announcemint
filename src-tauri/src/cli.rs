@@ -1,6 +1,6 @@
 //! CLI for announcemint: generate, list-presets, list-voices, check-credentials, test-proxy.
 
-use crate::app_config::{load_app_config, config_to_credential_options};
+use crate::app_config::{config_to_credential_options, load_app_config};
 use crate::polly::{
     build_client_with_options, describe_voices, format_prompt_filename, synthesize_line,
 };
@@ -26,7 +26,10 @@ enum Subcommand {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "generate", about = "Generate voice prompts from text (one per line)")]
+#[command(
+    name = "generate",
+    about = "Generate voice prompts from text (one per line)"
+)]
 pub struct GenerateArgs {
     #[arg(long, short = 'o', env = "ANNOUNCEMINT_OUTPUT_DIR")]
     pub output_dir: PathBuf,
@@ -83,7 +86,10 @@ pub struct ListVoicesArgs {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "check-credentials", about = "Check AWS credentials and Polly permissions")]
+#[command(
+    name = "check-credentials",
+    about = "Check AWS credentials and Polly permissions"
+)]
 pub struct CheckCredentialsArgs {
     #[arg(long)]
     pub config_file: Option<PathBuf>,
@@ -121,7 +127,13 @@ fn read_lines(args: &GenerateArgs) -> Result<Vec<String>, String> {
 fn merge_config_with_generate_args(
     config: Option<&crate::app_config::AppConfig>,
     args: &GenerateArgs,
-) -> (String, Option<String>, Option<String>, Option<String>, Option<String>) {
+) -> (
+    String,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+) {
     let voice_id = args.voice_id.clone();
     let engine = args
         .engine
@@ -223,7 +235,10 @@ async fn run_generate(args: GenerateArgs) -> Result<(), String> {
 fn run_list_presets(args: ListPresetsArgs) -> Result<(), String> {
     let presets = OutputPreset::builtins();
     if args.output.eq_ignore_ascii_case("json") {
-        println!("{}", serde_json::to_string_pretty(&presets).map_err(|e| e.to_string())?);
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&presets).map_err(|e| e.to_string())?
+        );
     } else {
         println!("{:<45} {:<6} {:>8} {:>4}", "Name", "Format", "Rate", "Ch");
         for p in &presets {
@@ -254,10 +269,17 @@ async fn run_list_voices(args: ListVoicesArgs) -> Result<(), String> {
         .map(config_to_credential_options)
         .unwrap_or_default();
     let client = build_client_with_options(Some(&opts)).await?;
-    let voices =
-        describe_voices(&client, args.language_code.as_deref(), args.engine.as_deref()).await?;
+    let voices = describe_voices(
+        &client,
+        args.language_code.as_deref(),
+        args.engine.as_deref(),
+    )
+    .await?;
     if args.output.eq_ignore_ascii_case("json") {
-        println!("{}", serde_json::to_string_pretty(&voices).map_err(|e| e.to_string())?);
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&voices).map_err(|e| e.to_string())?
+        );
     } else {
         println!("{:<20} {:<12} {:<8}", "Id", "Language", "Engines");
         for v in &voices {
@@ -268,9 +290,15 @@ async fn run_list_voices(args: ListVoicesArgs) -> Result<(), String> {
     Ok(())
 }
 
-fn print_credentials_result(result: &CredentialsAndPermissionsResult, json: bool) -> Result<(), String> {
+fn print_credentials_result(
+    result: &CredentialsAndPermissionsResult,
+    json: bool,
+) -> Result<(), String> {
     if json {
-        println!("{}", serde_json::to_string_pretty(result).map_err(|e| e.to_string())?);
+        println!(
+            "{}",
+            serde_json::to_string_pretty(result).map_err(|e| e.to_string())?
+        );
     } else {
         if let Some(ref src) = result.config_source {
             println!("Config source: {}", src);
@@ -327,7 +355,9 @@ async fn run_test_proxy(args: TestProxyArgs) -> Result<(), String> {
         .ok_or_else(|| "Failed to load config".to_string())?;
     let opts = config_to_credential_options(&config);
     let client = build_client_with_options(Some(&opts)).await?;
-    crate::polly::check_session(&client).await.map_err(|e| e.to_string())?;
+    crate::polly::check_session(&client)
+        .await
+        .map_err(|e| e.to_string())?;
     println!("Proxy test OK");
     Ok(())
 }

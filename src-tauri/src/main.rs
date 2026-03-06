@@ -8,7 +8,9 @@ mod polly;
 mod preset;
 mod progress;
 
-use app_config::{load_app_config, AppConfig, config_path, config_to_credential_options, build_proxy_url};
+use app_config::{
+    build_proxy_url, config_path, config_to_credential_options, load_app_config, AppConfig,
+};
 use polly::{
     build_client_with_options, check_session, describe_voices, format_prompt_filename,
     load_sdk_config_with_options, resolve_region, synthesize_line, test_synthesize_speech,
@@ -89,9 +91,7 @@ async fn get_config() -> Result<AppConfig, String> {
 async fn save_config(config: AppConfig) -> Result<(), String> {
     let path = config_path()?;
     let s = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
-    tokio::fs::write(&path, s)
-        .await
-        .map_err(|e| e.to_string())
+    tokio::fs::write(&path, s).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
