@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="100"
+   height="100"
+   viewBox="0 0 100 100"
+   version="1.1"
+   id="svg4"
+   sodipodi:docname="announcemint_icon (2).svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="namedview4"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="7.73"
+     inkscape:cx="49.935317"
+     inkscape:cy="50"
+     inkscape:window-width="1920"
+     inkscape:window-height="991"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg4" />
+  <!-- Speech bubble shape with tail -->
+  <path
+     d="M50 10C30 10 15 25 15 45C15 62 28 76 45 78V90L55 78H60C80 78 95 63 95 45C95 25 80 10 60 10H50Z"
+     fill="#A8E6CF"
+     stroke="#FFFFFF"
+     stroke-width="4"
+     id="path1" />
+  <!-- Megaphone icon (conical, flared design) -->
+  <path
+     d="m 31.849935,33.188875 c 0,-2 1,-3 3,-3 h 22 l 13,-7 v 40 l -13,-7 h -22 c -2,0 -3,-1 -3,-3 z"
+     fill="#ffffff"
+     id="path2" />
+  <path
+     d="m 69.849935,36.188875 h 6 c 2,0 3,1 3,3 v 8 c 0,2 -1,3 -3,3 h -6 z"
+     fill="#ffffff"
+     id="path3" />
+  <path
+     d="m 56.849935,43.188875 h 5 v 2 h -5 z"
+     fill="#a8e6cf"
+     id="path4" />
+</svg>
