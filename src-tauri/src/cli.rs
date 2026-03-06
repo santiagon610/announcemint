@@ -1,8 +1,8 @@
 //! CLI entry point for `announcemint generate`: parse args (with env overrides) and run generation.
 
-use clap::Parser;
 use crate::polly::{build_client, sanitize_filename, synthesize_line};
 use crate::preset::{apply_preset, OutputFormat, OutputPreset};
+use clap::Parser;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
@@ -75,12 +75,11 @@ pub async fn run_generate() -> Result<bool, String> {
         .preset
         .as_deref()
         .and_then(|n| {
-            OutputPreset::builtins()
-                .into_iter()
-                .find(|p| {
-                    p.name.eq_ignore_ascii_case(n)
-                        || n.replace(' ', "-").eq_ignore_ascii_case(&p.name.replace(' ', "-"))
-                })
+            OutputPreset::builtins().into_iter().find(|p| {
+                p.name.eq_ignore_ascii_case(n)
+                    || n.replace(' ', "-")
+                        .eq_ignore_ascii_case(&p.name.replace(' ', "-"))
+            })
         })
         .unwrap_or_else(OutputPreset::ogg_only);
     let region = std::env::var("AWS_REGION").ok();

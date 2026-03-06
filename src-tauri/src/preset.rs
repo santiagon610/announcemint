@@ -59,10 +59,7 @@ impl OutputPreset {
 
     /// All built-in presets.
     pub fn builtins() -> Vec<OutputPreset> {
-        vec![
-            Self::ogg_only(),
-            Self::two_way_voice_prompt(),
-        ]
+        vec![Self::ogg_only(), Self::two_way_voice_prompt()]
     }
 }
 
@@ -120,9 +117,13 @@ pub fn ogg_to_wav(ogg_bytes: &[u8], preset: &OutputPreset) -> Result<Vec<u8>, St
         let mut writer = hound::WavWriter::new(std::io::Cursor::new(&mut wav_buf), spec)
             .map_err(|e| format!("wav writer: {}", e))?;
         for s in &samples {
-            writer.write_sample(*s).map_err(|e| format!("wav write: {}", e))?;
+            writer
+                .write_sample(*s)
+                .map_err(|e| format!("wav write: {}", e))?;
         }
-        writer.finalize().map_err(|e| format!("wav finalize: {}", e))?;
+        writer
+            .finalize()
+            .map_err(|e| format!("wav finalize: {}", e))?;
     }
     Ok(wav_buf)
 }
@@ -132,10 +133,7 @@ fn resample_i16(samples: &[i16], rate_in: u32, rate_out: u32) -> Result<Vec<i16>
     if rate_in == rate_out {
         return Ok(samples.to_vec());
     }
-    let f32_in: Vec<f32> = samples
-        .iter()
-        .map(|&s| s as f32 / 32768.0)
-        .collect();
+    let f32_in: Vec<f32> = samples.iter().map(|&s| s as f32 / 32768.0).collect();
     let f32_out = resample_f32(&f32_in, rate_in, rate_out)?;
     Ok(f32_out
         .iter()
@@ -149,13 +147,8 @@ fn resample_i16(samples: &[i16], rate_in: u32, rate_out: u32) -> Result<Vec<i16>
 fn resample_f32(samples: &[f32], rate_in: u32, rate_out: u32) -> Result<Vec<f32>, String> {
     use rubato::{FftFixedInOut, Resampler};
     let chunk_size = 1024;
-    let mut resampler = FftFixedInOut::new(
-        rate_in as usize,
-        rate_out as usize,
-        chunk_size,
-        1,
-    )
-    .map_err(|e| format!("resampler: {}", e))?;
+    let mut resampler = FftFixedInOut::new(rate_in as usize, rate_out as usize, chunk_size, 1)
+        .map_err(|e| format!("resampler: {}", e))?;
     let in_frames = resampler.input_frames_next();
     let mut out = Vec::new();
     let mut pos = 0;
@@ -220,7 +213,7 @@ pub async fn apply_preset(
 
 #[cfg(test)]
 mod tests {
-    use super::{OutputPreset, OutputFormat};
+    use super::{OutputFormat, OutputPreset};
 
     #[test]
     fn test_builtins() {

@@ -27,3 +27,6 @@ cli-release *ARGS:
 
 cleanup:
     rm -rfv dist/ node_modules/ package-lock.json
+
+fmt:
+    cargo fmt --all --manifest-path src-tauri/Cargo.toml

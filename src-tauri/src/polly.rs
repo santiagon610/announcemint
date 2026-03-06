@@ -1,10 +1,10 @@
 //! AWS Polly client: session check, describe voices, synthesize speech to Ogg.
 
+use aws_config::BehaviorVersion;
+use aws_credential_types::Credentials;
+use aws_runtime::env_config::file::{EnvConfigFileKind, EnvConfigFiles};
 use aws_sdk_polly::types::{Engine, OutputFormat, TextType, VoiceId};
 use aws_sdk_polly::Client;
-use aws_config::BehaviorVersion;
-use aws_runtime::env_config::file::{EnvConfigFileKind, EnvConfigFiles};
-use aws_credential_types::Credentials;
 use aws_types::SdkConfig;
 use std::path::Path;
 use std::str::FromStr;
@@ -46,14 +46,14 @@ pub async fn load_sdk_config_with_options(
 
     let region = opts
         .map(resolve_region)
-        .unwrap_or_else(|| {
-            std::env::var("AWS_REGION").unwrap_or_else(|_| "us-east-1".to_string())
-        });
+        .unwrap_or_else(|| std::env::var("AWS_REGION").unwrap_or_else(|_| "us-east-1".to_string()));
     let region = aws_config::Region::new(region);
 
     if let Some(o) = opts {
         let use_manual = o.access_key_id.as_ref().map_or(false, |s| !s.is_empty())
-            && o.secret_access_key.as_ref().map_or(false, |s| !s.is_empty());
+            && o.secret_access_key
+                .as_ref()
+                .map_or(false, |s| !s.is_empty());
         if use_manual {
             let creds = Credentials::new(
                 o.access_key_id.as_deref().unwrap_or(""),
@@ -69,10 +69,15 @@ pub async fn load_sdk_config_with_options(
                 .await);
         }
         if let Some(profile) = o.profile.as_deref().filter(|s| !s.is_empty()) {
-            let config_dir_path = o.config_dir.as_deref().filter(|s| !s.is_empty()).map(Path::new);
-            let profile_region = crate::aws_config_file::get_profile_region(config_dir_path, profile)
-                .or_else(|| std::env::var("AWS_REGION").ok())
-                .unwrap_or_else(|| "us-east-1".to_string());
+            let config_dir_path = o
+                .config_dir
+                .as_deref()
+                .filter(|s| !s.is_empty())
+                .map(Path::new);
+            let profile_region =
+                crate::aws_config_file::get_profile_region(config_dir_path, profile)
+                    .or_else(|| std::env::var("AWS_REGION").ok())
+                    .unwrap_or_else(|| "us-east-1".to_string());
             let region = aws_config::Region::new(profile_region);
             let mut loader = aws_config::defaults(BehaviorVersion::latest())
                 .region(region.clone())
@@ -80,8 +85,8 @@ pub async fn load_sdk_config_with_options(
             if let Some(dir) = o.config_dir.as_ref().filter(|s| !s.is_empty()) {
                 let cred_path = Path::new(dir).join("credentials");
                 let config_path = Path::new(dir).join("config");
-                let mut builder = EnvConfigFiles::builder()
-                    .with_file(EnvConfigFileKind::Config, config_path);
+                let mut builder =
+                    EnvConfigFiles::builder().with_file(EnvConfigFileKind::Config, config_path);
                 if cred_path.exists() {
                     builder = builder.with_file(EnvConfigFileKind::Credentials, cred_path);
                 }
@@ -98,7 +103,9 @@ pub async fn load_sdk_config_with_options(
 }
 
 /// Build a Polly client from optional credential options.
-pub async fn build_client_with_options(opts: Option<&AwsCredentialOptions>) -> Result<Client, String> {
+pub async fn build_client_with_options(
+    opts: Option<&AwsCredentialOptions>,
+) -> Result<Client, String> {
     let config = load_sdk_config_with_options(opts).await?;
     Ok(Client::new(&config))
 }
@@ -160,7 +167,10 @@ pub async fn describe_voices(
 ) -> Result<Vec<VoiceInfo>, String> {
     let mut req = client.describe_voices();
     if let Some(lc) = language_code {
-        req = req.set_language_code(Some(aws_sdk_polly::types::LanguageCode::from_str(lc).map_err(|_| format!("invalid language code: {}", lc))?));
+        req = req.set_language_code(Some(
+            aws_sdk_polly::types::LanguageCode::from_str(lc)
+                .map_err(|_| format!("invalid language code: {}", lc))?,
+        ));
     }
     if let Some(eng) = engine {
         let e = match eng {
@@ -199,7 +209,13 @@ pub async fn describe_voices(
 pub fn sanitize_filename(text: &str) -> String {
     text.trim()
         .chars()
-        .map(|c| if c.is_whitespace() || c == '/' || c == '\\' { '_' } else { c })
+        .map(|c| {
+            if c.is_whitespace() || c == '/' || c == '\\' {
+                '_'
+            } else {
+                c
+            }
+        })
         .filter(|c| {
             !std::path::Path::new(&c.to_string())
                 .components()
@@ -221,17 +237,19 @@ pub fn format_prompt_filename(text: &str, format: Option<&str>) -> String {
     }
     let format = format.unwrap_or("underscore");
     match format {
-        "none" => {
-            s.chars()
-                .map(|c| {
-                    if matches!(c, '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|' | '\0') {
-                        '_'
-                    } else {
-                        c
-                    }
-                })
-                .collect::<String>()
-        }
+        "none" => s
+            .chars()
+            .map(|c| {
+                if matches!(
+                    c,
+                    '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|' | '\0'
+                ) {
+                    '_'
+                } else {
+                    c
+                }
+            })
+            .collect::<String>(),
         "hyphen" | "hyphen_lower" | "hyphen_upper" => {
             let stem = replace_spaces_and_special(s, '-');
             apply_case(&stem, format)
@@ -249,7 +267,10 @@ fn replace_spaces_and_special(s: &str, sep: char) -> String {
     let hyphen_is_sep = sep == '-';
     for c in s.chars() {
         let is_sep = c.is_whitespace()
-            || matches!(c, '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|' | '\0')
+            || matches!(
+                c,
+                '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|' | '\0'
+            )
             || (hyphen_is_sep && c == '-');
         if is_sep {
             if !prev_was_sep {
@@ -334,6 +355,8 @@ pub async fn synthesize_line(
         .await
         .map_err(|e| e.to_string())?
         .into_bytes();
-    tokio::fs::write(output_path, aggregated).await.map_err(|e| e.to_string())?;
+    tokio::fs::write(output_path, aggregated)
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(())
 }

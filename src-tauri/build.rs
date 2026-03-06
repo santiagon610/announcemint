@@ -41,7 +41,10 @@ fn json_parse(s: &str) -> Result<std::collections::HashMap<String, String>, ()> 
         if let Some(start) = s.find(&needle) {
             let value_start = start + needle.len();
             if let Some(end) = s[value_start..].find('"') {
-                out.insert(key.to_string(), s[value_start..value_start + end].to_string());
+                out.insert(
+                    key.to_string(),
+                    s[value_start..value_start + end].to_string(),
+                );
             }
         }
     }
@@ -50,4 +53,3 @@ fn json_parse(s: &str) -> Result<std::collections::HashMap<String, String>, ()> 
     }
     Ok(out)
 }
-

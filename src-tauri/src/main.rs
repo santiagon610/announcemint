@@ -123,9 +123,7 @@ fn apply_proxy_env_from_config(c: &AppConfig) {
 
 /// Fetch public IP for diagnostics (uses HTTP_PROXY/HTTPS_PROXY if set).
 async fn fetch_public_ip() -> Option<String> {
-    let client = reqwest::Client::builder()
-        .build()
-        .ok()?;
+    let client = reqwest::Client::builder().build().ok()?;
     let body = client
         .get("https://checkip.amazonaws.com")
         .send()
@@ -283,9 +281,7 @@ async fn test_proxy_config() -> Result<(), String> {
     let client = build_client_with_options(Some(&opts))
         .await
         .map_err(normalize_aws_error)?;
-    check_session(&client)
-        .await
-        .map_err(normalize_aws_error)
+    check_session(&client).await.map_err(normalize_aws_error)
 }
 
 /// Returns the app version string for the About screen. Uses the version from Cargo (updated by
@@ -306,7 +302,11 @@ async fn get_caller_identity(_app: tauri::AppHandle) -> Result<CallerIdentity, S
     let opts = config_to_credential_options(&config);
     let sdk_config = load_sdk_config_with_options(Some(&opts)).await?;
     let sts = aws_sdk_sts::Client::new(&sdk_config);
-    let resp = sts.get_caller_identity().send().await.map_err(|e| e.to_string())?;
+    let resp = sts
+        .get_caller_identity()
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(CallerIdentity {
         user_id: resp.user_id().map(String::from).unwrap_or_default(),
         account: resp.account().map(String::from).unwrap_or_default(),
@@ -366,20 +366,20 @@ async fn check_credentials_and_permissions() -> Result<CredentialsAndPermissions
     let config_source = if use_manual {
         "Manual credentials".to_string()
     } else {
-        let dir = config
-            .aws_config_dir
-            .clone()
-            .unwrap_or_else(|| {
-                aws_config_file::default_aws_config_dir()
-                    .map(|p| p.to_string_lossy().into_owned())
-                    .unwrap_or_else(|| "Default (~/.aws)".to_string())
-            });
+        let dir = config.aws_config_dir.clone().unwrap_or_else(|| {
+            aws_config_file::default_aws_config_dir()
+                .map(|p| p.to_string_lossy().into_owned())
+                .unwrap_or_else(|| "Default (~/.aws)".to_string())
+        });
         if dir == "Default (~/.aws)" {
             aws_config_file::default_aws_config_dir()
                 .map(|p| p.join("config").to_string_lossy().into_owned())
                 .unwrap_or_else(|| "~/.aws/config".to_string())
         } else {
-            Path::new(&dir).join("config").to_string_lossy().into_owned()
+            Path::new(&dir)
+                .join("config")
+                .to_string_lossy()
+                .into_owned()
         }
     };
     let region = resolve_region(&opts);
@@ -388,12 +388,16 @@ async fn check_credentials_and_permissions() -> Result<CredentialsAndPermissions
         PermissionStatus {
             name: "Access to list voices".to_string(),
             granted: false,
-            hint: Some("Have your administrator add `polly:DescribeVoices` permission.".to_string()),
+            hint: Some(
+                "Have your administrator add `polly:DescribeVoices` permission.".to_string(),
+            ),
         },
         PermissionStatus {
             name: "Access to synthesize speech".to_string(),
             granted: false,
-            hint: Some("Have your administrator add `polly:SynthesizeSpeech` permission.".to_string()),
+            hint: Some(
+                "Have your administrator add `polly:SynthesizeSpeech` permission.".to_string(),
+            ),
         },
     ];
 
@@ -482,9 +486,7 @@ async fn polly_check_session(_app: tauri::AppHandle) -> Result<(), String> {
     let client = build_client_with_options(Some(&opts))
         .await
         .map_err(normalize_aws_error)?;
-    check_session(&client)
-        .await
-        .map_err(normalize_aws_error)
+    check_session(&client).await.map_err(normalize_aws_error)
 }
 
 #[tauri::command]
@@ -498,13 +500,9 @@ async fn polly_describe_voices(
     let client = build_client_with_options(Some(&opts))
         .await
         .map_err(normalize_aws_error)?;
-    describe_voices(
-        &client,
-        language_code.as_deref(),
-        engine.as_deref(),
-    )
-    .await
-    .map_err(normalize_aws_error)
+    describe_voices(&client, language_code.as_deref(), engine.as_deref())
+        .await
+        .map_err(normalize_aws_error)
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -549,16 +547,9 @@ async fn polly_synthesize_line(
     let name = format_prompt_filename(&text, config.prompt_file_name_format.as_deref());
     let ext = "ogg";
     let path = std::path::Path::new(&output_dir).join(format!("{}.{}", name, ext));
-    synthesize_line(
-        &client,
-        &text,
-        &voice_id,
-        engine.as_deref(),
-        &path,
-        None,
-    )
-    .await
-    .map_err(normalize_aws_error)?;
+    synthesize_line(&client, &text, &voice_id, engine.as_deref(), &path, None)
+        .await
+        .map_err(normalize_aws_error)?;
     Ok(path.to_string_lossy().into_owned())
 }
 
@@ -574,9 +565,11 @@ async fn polly_generate_prompts(
     let preset = preset_name
         .as_deref()
         .and_then(|n| {
-            OutputPreset::builtins()
-                .into_iter()
-                .find(|p| p.name.eq_ignore_ascii_case(n) || n.replace(' ', "-").eq_ignore_ascii_case(&p.name.replace(' ', "-")))
+            OutputPreset::builtins().into_iter().find(|p| {
+                p.name.eq_ignore_ascii_case(n)
+                    || n.replace(' ', "-")
+                        .eq_ignore_ascii_case(&p.name.replace(' ', "-"))
+            })
         })
         .unwrap_or_else(OutputPreset::ogg_only);
     let output_path = std::path::Path::new(&output_dir);
@@ -585,7 +578,11 @@ async fn polly_generate_prompts(
     let client = build_client_with_options(Some(&opts))
         .await
         .map_err(normalize_aws_error)?;
-    let filtered: Vec<&str> = lines.iter().map(|s| s.trim()).filter(|s| !s.is_empty()).collect();
+    let filtered: Vec<&str> = lines
+        .iter()
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .collect();
     let total = filtered.len();
 
     let (tx, mut rx) = mpsc::unbounded_channel();
@@ -637,9 +634,11 @@ async fn check_destination_paths(
     let preset = preset_name
         .as_deref()
         .and_then(|n| {
-            OutputPreset::builtins()
-                .into_iter()
-                .find(|p| p.name.eq_ignore_ascii_case(n) || n.replace(' ', "-").eq_ignore_ascii_case(&p.name.replace(' ', "-")))
+            OutputPreset::builtins().into_iter().find(|p| {
+                p.name.eq_ignore_ascii_case(n)
+                    || n.replace(' ', "-")
+                        .eq_ignore_ascii_case(&p.name.replace(' ', "-"))
+            })
         })
         .unwrap_or_else(OutputPreset::ogg_only);
     let output_path = std::path::Path::new(&output_dir);

@@ -134,7 +134,7 @@ pub fn get_profile_region(config_dir: Option<&Path>, profile_name: &str) -> Opti
 #[cfg(test)]
 mod tests {
     use super::{
-        list_profiles_from_config_file, list_profiles_from_credentials_file, list_aws_profiles,
+        list_aws_profiles, list_profiles_from_config_file, list_profiles_from_credentials_file,
     };
     use std::io::Write;
 
