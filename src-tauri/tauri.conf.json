@@ -112,8 +112,35 @@
               "short": "p",
               "description": "Output preset name (e.g. two-way-voice-prompt)",
               "takesValue": true
+            },
+            {
+              "name": "prompt-file-name-format",
+              "description": "Filename format: none, hyphen, hyphen_lower, hyphen_upper, underscore, underscore_lower, underscore_upper",
+              "takesValue": true
+            },
+            {
+              "name": "config-file",
+              "description": "Path to config file (default: app config dir)",
+              "takesValue": true
+            },
+            {
+              "name": "dry-run",
+              "description": "Print output paths without generating",
+              "takesValue": false
             }
           ]
+        },
+        "list-presets": {
+          "description": "List built-in output presets"
+        },
+        "list-voices": {
+          "description": "List available Polly voices"
+        },
+        "check-credentials": {
+          "description": "Check AWS credentials and Polly permissions"
+        },
+        "test-proxy": {
+          "description": "Test proxy configuration with Polly"
         }
       }
     }

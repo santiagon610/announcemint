@@ -15,9 +15,13 @@ gui-build-macos:
     cargo build --manifest-path src-tauri/Cargo.toml
     npm run tauri build -- --bundles app
 
-# Run the CLI. Pass arguments after the recipe, e.g.:
+# Run the CLI. Uses same config as GUI when present. Examples:
 #   just cli generate --output-dir ./out --text "Hello"
 #   just cli generate --output-dir ./out --file prompts.txt --preset "Two-Way Voice Prompt"
+#   just cli list-presets
+#   just cli list-voices
+#   just cli check-credentials
+#   just cli test-proxy
 cli *ARGS:
     cargo run --manifest-path src-tauri/Cargo.toml -- {{ARGS}}
 

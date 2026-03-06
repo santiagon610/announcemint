@@ -1,119 +1,26 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod app_config;
 mod aws_config_file;
 mod cli;
 mod polly;
 mod preset;
 mod progress;
 
+use app_config::{load_app_config, AppConfig, config_path, config_to_credential_options, build_proxy_url};
 use polly::{
     build_client_with_options, check_session, describe_voices, format_prompt_filename,
     load_sdk_config_with_options, resolve_region, synthesize_line, test_synthesize_speech,
-    AwsCredentialOptions, VoiceInfo,
+    VoiceInfo,
 };
 use preset::{apply_preset, OutputFormat, OutputPreset};
 use progress::ProgressReporter;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::path::Path;
 use tauri::Emitter;
 use tokio::sync::mpsc;
 
-#[derive(Debug, Default, Serialize, Deserialize)]
-pub struct AppConfig {
-    pub voice_id: Option<String>,
-    pub engine: Option<String>,
-    pub language_code: Option<String>,
-    pub preset_name: Option<String>,
-    pub output_dir: Option<String>,
-    pub prompt_lines: Option<String>,
-    pub remember_prompts: Option<bool>,
-    pub prompt_file_name_format: Option<String>,
-    pub aws_proxy_enabled: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub aws_proxy_url: Option<String>, // deprecated: use structured fields below
-    pub aws_proxy_protocol: Option<String>,
-    pub aws_proxy_host: Option<String>,
-    pub aws_proxy_port: Option<String>,
-    pub aws_proxy_username: Option<String>,
-    pub aws_proxy_password: Option<String>,
-    pub aws_profile: Option<String>,
-    pub aws_config_dir: Option<String>,
-    pub aws_region_manual: Option<String>,
-    pub aws_access_key_id: Option<String>,
-    pub aws_secret_access_key: Option<String>,
-    pub aws_use_manual: Option<bool>,
-}
-
-/// Build proxy URL from structured config. Used for AWS SDK and IP check.
-fn build_proxy_url(c: &AppConfig) -> Option<String> {
-    if !c.aws_proxy_enabled.unwrap_or(false) {
-        return None;
-    }
-    let host = c.aws_proxy_host.as_deref().filter(|s| !s.is_empty())?;
-    let port = c
-        .aws_proxy_port
-        .as_deref()
-        .filter(|s| !s.is_empty())
-        .unwrap_or(match c.aws_proxy_protocol.as_deref().unwrap_or("http") {
-            "https" => "443",
-            "socks" | "socks5" => "1080",
-            _ => "8080",
-        });
-    let protocol = match c.aws_proxy_protocol.as_deref().unwrap_or("http") {
-        "https" => "https",
-        "socks" | "socks5" => "socks5",
-        _ => "http",
-    };
-    let user = c.aws_proxy_username.as_deref().filter(|s| !s.is_empty());
-    let pass = c.aws_proxy_password.as_ref();
-    let auth = if user.is_some() || pass.as_ref().map_or(false, |s| !s.is_empty()) {
-        let u = urlencoding::encode(user.unwrap_or(""));
-        let p = urlencoding::encode(pass.as_deref().map_or("", |v| v));
-        format!("{}:{}@", u, p)
-    } else {
-        String::new()
-    };
-    Some(format!("{}://{}{}:{}", protocol, auth, host, port))
-}
-
-fn config_to_credential_options(c: &AppConfig) -> AwsCredentialOptions {
-    let use_manual = c.aws_use_manual.unwrap_or_else(|| {
-        c.aws_access_key_id
-            .as_ref()
-            .map_or(false, |s| !s.is_empty())
-            && c.aws_secret_access_key
-                .as_ref()
-                .map_or(false, |s| !s.is_empty())
-    });
-    let proxy_url = build_proxy_url(c).or_else(|| c.aws_proxy_url.clone());
-    AwsCredentialOptions {
-        profile: c.aws_profile.clone(),
-        config_dir: c.aws_config_dir.clone(),
-        region: c.aws_region_manual.clone(),
-        proxy_enabled: c.aws_proxy_enabled.unwrap_or(false),
-        proxy_url,
-        access_key_id: if use_manual {
-            c.aws_access_key_id.clone()
-        } else {
-            None
-        },
-        secret_access_key: if use_manual {
-            c.aws_secret_access_key.clone()
-        } else {
-            None
-        },
-    }
-}
-
-const CONFIG_FILENAME: &str = "config.json";
-// From brand.json via build.rs (see BRAND_PUBLISHER, BRAND_APP_NAME)
-const CONFIG_DIR_PUBLISHER: &str = env!("BRAND_PUBLISHER");
-const CONFIG_DIR_APP: &str = env!("BRAND_APP_NAME");
-
-/// Set HTTP_PROXY/HTTPS_PROXY from config when the user has enabled a proxy in the app.
-/// When proxy is disabled, we do not remove existing env vars so the process can still use
-/// the environment's proxy (e.g. when launched from a terminal that has HTTP_PROXY set).
 fn apply_proxy_env_from_config(c: &AppConfig) {
     if let Some(url) = build_proxy_url(c) {
         std::env::set_var("HTTP_PROXY", &url);
@@ -173,33 +80,16 @@ fn normalize_aws_error(e: impl AsRef<str>) -> String {
     s.to_string()
 }
 
-fn app_config_dir() -> Result<std::path::PathBuf, String> {
-    dirs::config_dir()
-        .ok_or_else(|| "No config directory".to_string())
-        .map(|p| p.join(CONFIG_DIR_PUBLISHER).join(CONFIG_DIR_APP))
-}
-
 #[tauri::command]
 async fn get_config() -> Result<AppConfig, String> {
-    let dir = app_config_dir()?;
-    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let config_path = dir.join(CONFIG_FILENAME);
-    if !config_path.exists() {
-        return Ok(AppConfig::default());
-    }
-    let s = tokio::fs::read_to_string(&config_path)
-        .await
-        .map_err(|e| e.to_string())?;
-    serde_json::from_str(&s).map_err(|e| e.to_string())
+    load_app_config(None)
 }
 
 #[tauri::command]
 async fn save_config(config: AppConfig) -> Result<(), String> {
-    let dir = app_config_dir()?;
-    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let config_path = dir.join(CONFIG_FILENAME);
+    let path = config_path()?;
     let s = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
-    tokio::fs::write(&config_path, s)
+    tokio::fs::write(&path, s)
         .await
         .map_err(|e| e.to_string())
 }
@@ -276,7 +166,7 @@ fn list_aws_regions() -> Vec<String> {
 /// Test proxy configuration by making a request to the AWS API (Polly DescribeVoices) in the configured region.
 #[tauri::command]
 async fn test_proxy_config() -> Result<(), String> {
-    let config = get_config().await?;
+    let config = load_app_config(None)?;
     let opts = config_to_credential_options(&config);
     let client = build_client_with_options(Some(&opts))
         .await
@@ -298,7 +188,7 @@ fn get_app_version(app: tauri::AppHandle) -> String {
 
 #[tauri::command]
 async fn get_caller_identity(_app: tauri::AppHandle) -> Result<CallerIdentity, String> {
-    let config = get_config().await?;
+    let config = load_app_config(None)?;
     let opts = config_to_credential_options(&config);
     let sdk_config = load_sdk_config_with_options(Some(&opts)).await?;
     let sts = aws_sdk_sts::Client::new(&sdk_config);
@@ -349,9 +239,10 @@ pub struct CredentialsAndPermissionsResult {
     pub permissions: Vec<PermissionStatus>,
 }
 
-#[tauri::command]
-async fn check_credentials_and_permissions() -> Result<CredentialsAndPermissionsResult, String> {
-    let config = get_config().await?;
+/// Core logic for checking credentials and permissions. Used by both Tauri command and CLI.
+pub async fn run_check_credentials_and_permissions(
+    config: AppConfig,
+) -> Result<CredentialsAndPermissionsResult, String> {
     let opts = config_to_credential_options(&config);
     let use_manual = config.aws_use_manual.unwrap_or_else(|| {
         config
@@ -480,8 +371,14 @@ async fn check_credentials_and_permissions() -> Result<CredentialsAndPermissions
 }
 
 #[tauri::command]
+async fn check_credentials_and_permissions() -> Result<CredentialsAndPermissionsResult, String> {
+    let config = load_app_config(None)?;
+    run_check_credentials_and_permissions(config).await
+}
+
+#[tauri::command]
 async fn polly_check_session(_app: tauri::AppHandle) -> Result<(), String> {
-    let config = get_config().await?;
+    let config = load_app_config(None)?;
     let opts = config_to_credential_options(&config);
     let client = build_client_with_options(Some(&opts))
         .await
@@ -495,7 +392,7 @@ async fn polly_describe_voices(
     language_code: Option<String>,
     engine: Option<String>,
 ) -> Result<Vec<VoiceInfo>, String> {
-    let config = get_config().await?;
+    let config = load_app_config(None)?;
     let opts = config_to_credential_options(&config);
     let client = build_client_with_options(Some(&opts))
         .await
@@ -539,7 +436,7 @@ async fn polly_synthesize_line(
     engine: Option<String>,
     output_dir: String,
 ) -> Result<String, String> {
-    let config = get_config().await?;
+    let config = load_app_config(None)?;
     let opts = config_to_credential_options(&config);
     let client = build_client_with_options(Some(&opts))
         .await
@@ -573,7 +470,7 @@ async fn polly_generate_prompts(
         })
         .unwrap_or_else(OutputPreset::ogg_only);
     let output_path = std::path::Path::new(&output_dir);
-    let config = get_config().await?;
+    let config = load_app_config(None)?;
     let opts = config_to_credential_options(&config);
     let client = build_client_with_options(Some(&opts))
         .await
@@ -642,7 +539,7 @@ async fn check_destination_paths(
         })
         .unwrap_or_else(OutputPreset::ogg_only);
     let output_path = std::path::Path::new(&output_dir);
-    let config = get_config().await?;
+    let config = load_app_config(None)?;
     let format_opt = config.prompt_file_name_format.as_deref();
     let mut existing = Vec::new();
     for line in &lines {
@@ -666,7 +563,7 @@ async fn check_destination_paths(
 
 fn main() {
     let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
-    let ran_cli = rt.block_on(cli::run_generate());
+    let ran_cli = rt.block_on(cli::run_cli());
     match ran_cli {
         Ok(true) => return,
         Ok(false) => {}

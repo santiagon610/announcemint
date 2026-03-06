@@ -219,7 +219,7 @@ mod tests {
     fn test_builtins() {
         let builtins = OutputPreset::builtins();
         assert!(builtins.len() >= 2);
-        assert_eq!(builtins[0].name, "Ogg only");
+        assert_eq!(builtins[0].name, "OGG Vorbis");
         assert_eq!(builtins[0].format, OutputFormat::Ogg);
         let two_way = OutputPreset::two_way_voice_prompt();
         assert_eq!(two_way.sample_rate, 8000);
