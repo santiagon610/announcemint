@@ -1,23 +1,23 @@
-# Flatpak manifest for Announcemint
+# Flatpak manifest – generated from brand.json by npm run sync-brand
 # Builds from the .deb package produced by `npm run tauri build -- --bundles deb`
 #
 # Prerequisites:
 #   flatpak install flathub org.gnome.Platform//46 org.gnome.Sdk//46
 #
 # Build locally (after building .deb):
-#   cp src-tauri/target/release/bundle/deb/*.deb flatpak/announcemint.deb
-#   flatpak-builder --force-clean build-dir flatpak/com.santiagon610.Announcemint.yml
+#   npm run prepare-flatpak-deb
+#   flatpak-builder --repo=repo --force-clean build-dir flatpak/manifest.yml
 #
 # Run:
-#   flatpak-builder --run build-dir flatpak/com.santiagon610.Announcemint.yml announcemint
+#   flatpak run {{APP_ID}}
 
-app-id: com.santiagon610.Announcemint
+app-id: {{APP_ID}}
 runtime: org.gnome.Platform
 runtime-version: "46"
 sdk: org.gnome.Sdk
 base: app
 base-version: "46"
-command: announcemint
+command: {{APP_SLUG}}
 
 finish-args:
   - --socket=wayland
@@ -30,22 +30,22 @@ finish-args:
   - --filesystem=home
 
 modules:
-  - name: announcemint
+  - name: {{APP_SLUG}}
     buildsystem: simple
     sources:
       - type: file
-        path: announcemint.deb
-        dest-filename: announcemint.deb
+        path: {{APP_SLUG}}.deb
+        dest-filename: {{APP_SLUG}}.deb
       - type: file
-        path: com.santiagon610.Announcemint.metainfo.xml
+        path: metainfo.xml
     build-commands:
-      - ar -x announcemint.deb
+      - ar -x {{APP_SLUG}}.deb
       - tar -xf data.tar.*
-      - install -Dm755 usr/bin/announcemint -t /app/bin/
-      - install -Dm644 com.santiagon610.Announcemint.metainfo.xml /app/share/metainfo/com.santiagon610.Announcemint.metainfo.xml
+      - install -Dm755 usr/bin/{{APP_SLUG}} -t /app/bin/
+      - install -Dm644 metainfo.xml /app/share/metainfo/{{APP_ID}}.metainfo.xml
       - |
         for desktop in usr/share/applications/*.desktop; do
-          [ -f "$desktop" ] && install -Dm644 "$desktop" /app/share/applications/com.santiagon610.Announcemint.desktop
+          [ -f "$desktop" ] && install -Dm644 "$desktop" /app/share/applications/{{APP_ID}}.desktop
         done
       - |
         for icon in usr/share/icons/hicolor/*/apps/*.png; do

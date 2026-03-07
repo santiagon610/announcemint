@@ -21,12 +21,13 @@ gui-build-macos:
 
 # Build Flatpak for Linux (requires flatpak, flatpak-builder, and GNOME runtime).
 # Run `flatpak install flathub org.gnome.Platform//46 org.gnome.Sdk//46` first.
+# Manifest and metainfo are generated from brand.json by npm run sync-brand.
 flatpak:
     npm run tauri build -- --bundles deb --ci
-    cp src-tauri/target/release/bundle/deb/*.deb flatpak/announcemint.deb
-    flatpak-builder --repo=repo --force-clean build-dir flatpak/com.santiagon610.Announcemint.yml
-    flatpak build-bundle repo announcemint.flatpak com.santiagon610.Announcemint
-    @echo "Built announcemint.flatpak. Install with: flatpak install announcemint.flatpak"
+    npm run prepare-flatpak-deb
+    flatpak-builder --repo=repo --force-clean build-dir flatpak/manifest.yml
+    flatpak build-bundle repo $(cat flatpak/.app-id).flatpak $(cat flatpak/.app-id)
+    @echo "Built $(cat flatpak/.app-id).flatpak. Install with: flatpak install $(cat flatpak/.app-id).flatpak"
 
 # Run the CLI. Uses same config as GUI when present. Examples:
 #   just cli generate --output-dir ./out --text "Hello"

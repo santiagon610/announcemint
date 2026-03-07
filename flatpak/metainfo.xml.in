@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>{{APP_ID}}</id>
+  <name>{{APP_NAME}}</name>
+  <summary>{{SHORT_DESCRIPTION}}</summary>
+  <description>
+    <p>{{LONG_DESCRIPTION}}</p>
+    <p>Features:</p>
+    <ul>
+      <li>Generate voice prompts from text (one per line)</li>
+      <li>Built-in presets for two-way radio and other use cases</li>
+      <li>OGG Vorbis or WAV output</li>
+      <li>AWS credential and profile support</li>
+    </ul>
+  </description>
+  <developer_name>{{DEVELOPER_NAME}}</developer_name>
+  <project_license>{{PROJECT_LICENSE}}</project_license>
+  <url type="homepage">{{GITHUB_REPO}}</url>
+  <url type="help">{{DOCS_URL}}</url>
+</component>
