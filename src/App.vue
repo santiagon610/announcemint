@@ -579,9 +579,7 @@ function initThemeSync(): void {
         });
         setTheme(windowTheme, "window");
       }
-      await win.onThemeChanged((ev) =>
-        setTheme(ev.payload, "onThemeChanged"),
-      );
+      await win.onThemeChanged((ev) => setTheme(ev.payload, "onThemeChanged"));
       log("listening for theme changes");
     } catch (e) {
       console.warn("[theme] sync failed, using prefers-color-scheme", e);
@@ -622,7 +620,16 @@ onMounted(async () => {
           title="Minimize"
           @click="minimizeWindow"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 13H5v-2h14z"/></svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M19 13H5v-2h14z" />
+          </svg>
         </button>
         <button
           type="button"
@@ -630,7 +637,16 @@ onMounted(async () => {
           title="Maximize"
           @click="toggleMaximizeWindow"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16v16H4zm2 2v12h12V6z"/></svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M4 4h16v16H4zm2 2v12h12V6z" />
+          </svg>
         </button>
         <button
           type="button"
@@ -638,7 +654,18 @@ onMounted(async () => {
           title="Close"
           @click="closeWindow"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+            />
+          </svg>
         </button>
       </div>
     </header>
@@ -756,7 +783,10 @@ onMounted(async () => {
               >▼</span
             >
           </button>
-          <div v-show="openDrawer === 'aws'" class="drawer-body drawer-body-no-border">
+          <div
+            v-show="openDrawer === 'aws'"
+            class="drawer-body drawer-body-no-border"
+          >
             <!-- Subdrawer: AWS Account -->
             <div class="subdrawer">
               <button
@@ -783,184 +813,197 @@ onMounted(async () => {
                 <div class="form-row credential-toggle-row">
                   <label class="toggle-label">Credential source</label>
                   <div class="toggle-buttons">
-                <button
-                  type="button"
-                  :class="[
-                    'btn-secondary',
-                    'toggle-btn',
-                    { active: !awsUseManualCredentials },
-                  ]"
-                  @click="awsUseManualCredentials = false"
-                >
-                  AWS config file
-                </button>
-                <button
-                  type="button"
-                  :class="[
-                    'btn-secondary',
-                    'toggle-btn',
-                    { active: awsUseManualCredentials },
-                  ]"
-                  @click="awsUseManualCredentials = true"
-                >
-                  Manual credentials
-                </button>
+                    <button
+                      type="button"
+                      :class="[
+                        'btn-secondary',
+                        'toggle-btn',
+                        { active: !awsUseManualCredentials },
+                      ]"
+                      @click="awsUseManualCredentials = false"
+                    >
+                      AWS config file
+                    </button>
+                    <button
+                      type="button"
+                      :class="[
+                        'btn-secondary',
+                        'toggle-btn',
+                        { active: awsUseManualCredentials },
+                      ]"
+                      @click="awsUseManualCredentials = true"
+                    >
+                      Manual credentials
+                    </button>
                   </div>
                 </div>
 
                 <template v-if="awsUseManualCredentials">
-              <div class="drawer-fields">
-                <div class="form-row">
-                  <label>AWS Region</label>
-                  <select v-model="awsRegionManual">
-                    <option v-for="r in awsRegionsList" :key="r" :value="r">
-                      {{ r }}
-                    </option>
-                  </select>
-                </div>
-                <div class="form-row">
-                  <label>Access Key ID</label>
-                  <input
-                    v-model="awsAccessKeyId"
-                    type="text"
-                    placeholder="AKIA…"
-                    autocomplete="off"
-                  />
-                </div>
-                <div class="form-row">
-                  <label>Secret Access Key</label>
-                  <input
-                    v-model="awsSecretAccessKey"
-                    type="password"
-                    placeholder="…"
-                    autocomplete="off"
-                  />
-                </div>
-              </div>
-            </template>
-            <template v-else>
-              <div class="drawer-fields">
-                <div class="form-row">
-                  <label>Config directory</label>
-                  <div class="row-actions row-actions-wrap">
-                    <span class="config-dir-display">{{
-                      awsConfigDir || defaultAwsConfigDir || "Default (~/.aws)"
-                    }}</span>
-                    <span class="row-buttons">
-                      <button
-                        type="button"
-                        class="btn-secondary"
-                        @click="pickAwsConfigDir"
-                      >
-                        Browse…
-                      </button>
-                      <button
-                        v-if="awsConfigDir"
-                        type="button"
-                        class="btn-link btn-link-small"
-                        @click="
-                          awsConfigDir = null;
-                          loadAwsProfiles();
-                        "
-                      >
-                        Use default
-                      </button>
-                    </span>
+                  <div class="drawer-fields">
+                    <div class="form-row">
+                      <label>AWS Region</label>
+                      <select v-model="awsRegionManual">
+                        <option v-for="r in awsRegionsList" :key="r" :value="r">
+                          {{ r }}
+                        </option>
+                      </select>
+                    </div>
+                    <div class="form-row">
+                      <label>Access Key ID</label>
+                      <input
+                        v-model="awsAccessKeyId"
+                        type="text"
+                        placeholder="AKIA…"
+                        autocomplete="off"
+                      />
+                    </div>
+                    <div class="form-row">
+                      <label>Secret Access Key</label>
+                      <input
+                        v-model="awsSecretAccessKey"
+                        type="password"
+                        placeholder="…"
+                        autocomplete="off"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div class="form-row">
-                  <label>Profile</label>
-                  <select v-model="awsProfile">
-                    <option value="">— Use default / environment —</option>
-                    <option v-for="p in awsProfilesList" :key="p" :value="p">
-                      {{ p }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-            </template>
+                </template>
+                <template v-else>
+                  <div class="drawer-fields">
+                    <div class="form-row">
+                      <label>Config directory</label>
+                      <div class="row-actions row-actions-wrap">
+                        <span class="config-dir-display">{{
+                          awsConfigDir ||
+                          defaultAwsConfigDir ||
+                          "Default (~/.aws)"
+                        }}</span>
+                        <span class="row-buttons">
+                          <button
+                            type="button"
+                            class="btn-secondary"
+                            @click="pickAwsConfigDir"
+                          >
+                            Browse…
+                          </button>
+                          <button
+                            v-if="awsConfigDir"
+                            type="button"
+                            class="btn-link btn-link-small"
+                            @click="
+                              awsConfigDir = null;
+                              loadAwsProfiles();
+                            "
+                          >
+                            Use default
+                          </button>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <label>Profile</label>
+                      <select v-model="awsProfile">
+                        <option value="">— Use default / environment —</option>
+                        <option
+                          v-for="p in awsProfilesList"
+                          :key="p"
+                          :value="p"
+                        >
+                          {{ p }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </template>
 
-            <div class="form-row credentials-check-row">
-              <button
-                type="button"
-                class="btn-secondary"
-                :disabled="checkingCredentials"
-                @click="checkCredentialsAndPermissions"
-              >
-                {{
-                  checkingCredentials
-                    ? "Checking…"
-                    : "Check credentials and permissions"
-                }}
-              </button>
-            </div>
-            <div
-              v-if="credentialsAndPermissionsResult"
-              class="credentials-result"
-            >
-              <p
-                v-if="credentialsAndPermissionsResult.error"
-                class="credentials-error"
-              >
-                {{ credentialsAndPermissionsResult.error }}
-              </p>
-              <table class="credentials-table">
-                <tbody>
-                  <tr>
-                    <th>Config file</th>
-                    <td class="font-mono">
-                      {{ credentialsAndPermissionsResult.config_source ?? "—" }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Region</th>
-                    <td>{{ credentialsAndPermissionsResult.region ?? "—" }}</td>
-                  </tr>
-                  <tr>
-                    <th>User ID</th>
-                    <td>
-                      {{ credentialsAndPermissionsResult.user_id ?? "—" }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Account</th>
-                    <td>
-                      {{ credentialsAndPermissionsResult.account ?? "—" }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>ARN</th>
-                    <td class="arn-cell">
-                      <span class="arn-text font-mono">{{
-                        credentialsAndPermissionsResult.arn ?? "—"
-                      }}</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Public IP</th>
-                    <td>
-                      {{ credentialsAndPermissionsResult.public_ip ?? "—" }}
-                    </td>
-                  </tr>
-                  <tr
-                    v-for="p in credentialsAndPermissionsResult.permissions"
-                    :key="p.name"
+                <div class="form-row credentials-check-row">
+                  <button
+                    type="button"
+                    class="btn-secondary"
+                    :disabled="checkingCredentials"
+                    @click="checkCredentialsAndPermissions"
                   >
-                    <th>{{ p.name }}</th>
-                    <td>
-                      <span>{{ p.granted ? "✅" : "❌" }}</span>
-                      <span v-if="!p.granted && p.hint" class="permission-hint">
-                        {{ p.hint }}</span
+                    {{
+                      checkingCredentials
+                        ? "Checking…"
+                        : "Check credentials and permissions"
+                    }}
+                  </button>
+                </div>
+                <div
+                  v-if="credentialsAndPermissionsResult"
+                  class="credentials-result"
+                >
+                  <p
+                    v-if="credentialsAndPermissionsResult.error"
+                    class="credentials-error"
+                  >
+                    {{ credentialsAndPermissionsResult.error }}
+                  </p>
+                  <table class="credentials-table">
+                    <tbody>
+                      <tr>
+                        <th>Config file</th>
+                        <td class="font-mono">
+                          {{
+                            credentialsAndPermissionsResult.config_source ?? "—"
+                          }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Region</th>
+                        <td>
+                          {{ credentialsAndPermissionsResult.region ?? "—" }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>User ID</th>
+                        <td>
+                          {{ credentialsAndPermissionsResult.user_id ?? "—" }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Account</th>
+                        <td>
+                          {{ credentialsAndPermissionsResult.account ?? "—" }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>ARN</th>
+                        <td class="arn-cell">
+                          <span class="arn-text font-mono">{{
+                            credentialsAndPermissionsResult.arn ?? "—"
+                          }}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Public IP</th>
+                        <td>
+                          {{ credentialsAndPermissionsResult.public_ip ?? "—" }}
+                        </td>
+                      </tr>
+                      <tr
+                        v-for="p in credentialsAndPermissionsResult.permissions"
+                        :key="p.name"
                       >
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p v-if="sessionOk === false" class="session-hint">
-              Configure AWS credentials above, or set AWS_PROFILE /
-              ~/.aws/credentials.
-            </p>
+                        <th>{{ p.name }}</th>
+                        <td>
+                          <span>{{ p.granted ? "✅" : "❌" }}</span>
+                          <span
+                            v-if="!p.granted && p.hint"
+                            class="permission-hint"
+                          >
+                            {{ p.hint }}</span
+                          >
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p v-if="sessionOk === false" class="session-hint">
+                  Configure AWS credentials above, or set AWS_PROFILE /
+                  ~/.aws/credentials.
+                </p>
               </div>
             </div>
 
@@ -983,17 +1026,17 @@ onMounted(async () => {
                   >▼</span
                 >
               </button>
-              <div
-                v-show="openAwsSubdrawer === 'proxy'"
-                class="subdrawer-body"
-              >
+              <div v-show="openAwsSubdrawer === 'proxy'" class="subdrawer-body">
                 <div class="form-row form-row-checkbox proxy-toggle-row">
                   <label class="checkbox-label">
                     <input v-model="awsProxyEnabled" type="checkbox" />
                     Use an HTTP(S) or SOCKS proxy to access AWS
                   </label>
                 </div>
-                <div v-show="awsProxyEnabled" class="drawer-fields proxy-fields">
+                <div
+                  v-show="awsProxyEnabled"
+                  class="drawer-fields proxy-fields"
+                >
                   <div class="form-row">
                     <label>Proxy Protocol</label>
                     <select v-model="awsProxyProtocol">
@@ -1206,7 +1249,9 @@ onMounted(async () => {
                   :disabled="resettingConfig"
                   @click="resetConfigAndRelaunch"
                 >
-                  {{ resettingConfig ? "Resetting…" : "Delete config and restart" }}
+                  {{
+                    resettingConfig ? "Resetting…" : "Delete config and restart"
+                  }}
                 </button>
               </div>
             </div>
