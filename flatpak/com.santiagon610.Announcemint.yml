@@ -1,0 +1,57 @@
+# Flatpak manifest for Announcemint
+# Builds from the .deb package produced by `npm run tauri build -- --bundles deb`
+#
+# Prerequisites:
+#   flatpak install flathub org.gnome.Platform//46 org.gnome.Sdk//46
+#
+# Build locally (after building .deb):
+#   cp src-tauri/target/release/bundle/deb/*.deb flatpak/announcemint.deb
+#   flatpak-builder --force-clean build-dir flatpak/com.santiagon610.Announcemint.yml
+#
+# Run:
+#   flatpak-builder --run build-dir flatpak/com.santiagon610.Announcemint.yml announcemint
+
+app-id: com.santiagon610.Announcemint
+runtime: org.gnome.Platform
+runtime-version: "46"
+sdk: org.gnome.Sdk
+base: app
+base-version: "46"
+command: announcemint
+
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --share=ipc
+  - --share=network
+  - --filesystem=xdg-config
+  - --filesystem=xdg-data
+  - --filesystem=home
+
+modules:
+  - name: announcemint
+    buildsystem: simple
+    sources:
+      - type: file
+        path: announcemint.deb
+        dest-filename: announcemint.deb
+      - type: file
+        path: com.santiagon610.Announcemint.metainfo.xml
+    build-commands:
+      - ar -x announcemint.deb
+      - tar -xf data.tar.*
+      - install -Dm755 usr/bin/announcemint -t /app/bin/
+      - install -Dm644 com.santiagon610.Announcemint.metainfo.xml /app/share/metainfo/com.santiagon610.Announcemint.metainfo.xml
+      - |
+        for desktop in usr/share/applications/*.desktop; do
+          [ -f "$desktop" ] && install -Dm644 "$desktop" /app/share/applications/com.santiagon610.Announcemint.desktop
+        done
+      - |
+        for icon in usr/share/icons/hicolor/*/apps/*.png; do
+          if [ -f "$icon" ]; then
+            size=$(basename $(dirname $(dirname $icon)))
+            name=$(basename $icon)
+            install -Dm644 "$icon" "/app/share/icons/hicolor/$size/apps/$name"
+          fi
+        done

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.santiagon610.Announcemint</id>
+  <name>Announcemint</name>
+  <summary>AWS Polly text-to-speech with presets</summary>
+  <description>
+    <p>Convert text to speech using AWS Polly. Supports presets for two-way radio prompts and more.</p>
+    <p>Features:</p>
+    <ul>
+      <li>Generate voice prompts from text (one per line)</li>
+      <li>Built-in presets for two-way radio and other use cases</li>
+      <li>OGG Vorbis or WAV output</li>
+      <li>AWS credential and profile support</li>
+    </ul>
+  </description>
+  <developer_name>Nicholas Santiago</developer_name>
+  <project_license>GPL-3.0-or-later</project_license>
+  <url type="homepage">https://www.github.com/santiagon610/announcemint</url>
+  <url type="help">https://docs.announcemint.app</url>
+</component>

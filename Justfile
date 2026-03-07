@@ -19,6 +19,15 @@ gui-build-macos:
     cargo build --manifest-path src-tauri/Cargo.toml
     npm run tauri build -- --bundles app
 
+# Build Flatpak for Linux (requires flatpak, flatpak-builder, and GNOME runtime).
+# Run `flatpak install flathub org.gnome.Platform//46 org.gnome.Sdk//46` first.
+flatpak:
+    npm run tauri build -- --bundles deb --ci
+    cp src-tauri/target/release/bundle/deb/*.deb flatpak/announcemint.deb
+    flatpak-builder --repo=repo --force-clean build-dir flatpak/com.santiagon610.Announcemint.yml
+    flatpak build-bundle repo announcemint.flatpak com.santiagon610.Announcemint
+    @echo "Built announcemint.flatpak. Install with: flatpak install announcemint.flatpak"
+
 # Run the CLI. Uses same config as GUI when present. Examples:
 #   just cli generate --output-dir ./out --text "Hello"
 #   just cli generate --output-dir ./out --file prompts.txt --preset "Two-Way Voice Prompt"
