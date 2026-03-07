@@ -96,6 +96,60 @@ body {
   user-select: none;
   -webkit-user-select: none;
 }
+/* macOS: traffic lights on the left, title centered. Windows/Linux: title left, controls right. */
+.titlebar.macos {
+  flex-direction: row-reverse;
+}
+.titlebar.macos .titlebar-controls {
+  flex-direction: row;
+  margin-right: 0.5rem;
+}
+.titlebar.macos .titlebar-drag {
+  text-align: center;
+}
+/* macOS button order: Close, Minimize, Maximize (red, yellow, green). */
+.titlebar.macos .titlebar-btn-close {
+  order: 0;
+}
+.titlebar.macos .titlebar-btn-min {
+  order: 1;
+}
+.titlebar.macos .titlebar-btn-max {
+  order: 2;
+}
+
+/* macOS traffic light aesthetic: red, yellow, green circles with dark icons. */
+.titlebar.macos .titlebar-controls {
+  gap: 8px;
+}
+.titlebar.macos .titlebar-btn {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+  border-radius: 50%;
+  color: rgba(0, 0, 0, 0.55);
+  background: #ff5f57;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+}
+.titlebar.macos .titlebar-btn svg {
+  width: 6px;
+  height: 6px;
+}
+.titlebar.macos .titlebar-btn-min {
+  background: #febc2e;
+}
+.titlebar.macos .titlebar-btn-max {
+  background: #28c840;
+}
+.titlebar.macos .titlebar-btn:hover {
+  filter: brightness(0.92);
+}
+.titlebar.macos .titlebar-btn-close:hover {
+  background: #ff5f57;
+  filter: brightness(0.92);
+}
+
 .titlebar-controls {
   display: flex;
   align-items: stretch;

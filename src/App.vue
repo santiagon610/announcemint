@@ -72,6 +72,10 @@ const openAwsSubdrawer = ref<"account" | "proxy" | null>(null);
 const rememberPrompts = ref(true);
 const promptFileNameFormat = ref("hyphen");
 
+/** macOS uses traffic lights on the left; Windows/Linux use controls on the right. */
+const isMac =
+  typeof navigator !== "undefined" && navigator.platform === "MacIntel";
+
 const promptFileNameFormatOptions = [
   {
     value: "none",
@@ -611,12 +615,12 @@ onMounted(async () => {
 
 <template>
   <div class="app">
-    <header class="titlebar">
+    <header class="titlebar" :class="{ macos: isMac }">
       <div class="titlebar-drag" data-tauri-drag-region>{{ APP_NAME }}</div>
       <div class="titlebar-controls">
         <button
           type="button"
-          class="titlebar-btn"
+          class="titlebar-btn titlebar-btn-min"
           title="Minimize"
           @click="minimizeWindow"
         >
@@ -633,11 +637,27 @@ onMounted(async () => {
         </button>
         <button
           type="button"
-          class="titlebar-btn"
+          class="titlebar-btn titlebar-btn-max"
           title="Maximize"
           @click="toggleMaximizeWindow"
         >
+          <!-- macOS uses plus icon; Windows/Linux use maximize square -->
           <svg
+            v-if="isMac"
+            xmlns="http://www.w3.org/2000/svg"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          <svg
+            v-else
             xmlns="http://www.w3.org/2000/svg"
             width="12"
             height="12"

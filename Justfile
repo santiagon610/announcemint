@@ -1,6 +1,10 @@
 # Announcemint – just recipes
 # https://github.com/casey/just
 
+# Install Node dependencies. Run after clone or `just cleanup` before `just gui`.
+install:
+    npm install
+
 # Run all application tests (Rust unit + integration)
 test:
     cargo test --manifest-path src-tauri/Cargo.toml
