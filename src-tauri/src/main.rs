@@ -94,6 +94,16 @@ async fn save_config(config: AppConfig) -> Result<(), String> {
     tokio::fs::write(&path, s).await.map_err(|e| e.to_string())
 }
 
+/// Deletes the app config file. Used by the Danger Zone "Reset settings" flow; caller should relaunch after.
+#[tauri::command]
+fn delete_config_file() -> Result<(), String> {
+    let path = config_path()?;
+    if path.exists() {
+        std::fs::remove_file(&path).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 #[tauri::command]
 fn list_presets() -> Vec<OutputPreset> {
     OutputPreset::builtins()
@@ -102,6 +112,28 @@ fn list_presets() -> Vec<OutputPreset> {
 #[tauri::command]
 fn ping() -> String {
     "pong".into()
+}
+
+/// Returns the system color scheme on Linux via the XDG Settings portal (org.freedesktop.appearance.color-scheme).
+/// This fixes dark mode when the GTK theme name does not indicate dark (e.g. "Adwaita" with prefer-dark).
+/// On non-Linux or if the portal is unavailable, returns None so the frontend can use the window theme API.
+#[tauri::command]
+async fn get_system_theme() -> Option<String> {
+    #[cfg(target_os = "linux")]
+    {
+        use ashpd::desktop::settings::{ColorScheme, Settings};
+        let settings = Settings::new().await.ok()?;
+        let scheme = settings.color_scheme().await.ok()?;
+        Some(match scheme {
+            ColorScheme::PreferDark => "dark".to_string(),
+            ColorScheme::PreferLight => "light".to_string(),
+            ColorScheme::NoPreference => "light".to_string(),
+        })
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        None
+    }
 }
 
 #[tauri::command]
@@ -577,12 +609,14 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             ping,
             get_app_version,
             list_presets,
             get_config,
             save_config,
+            delete_config_file,
             get_default_aws_config_dir,
             list_aws_profiles,
             get_aws_profile_env,
@@ -596,6 +630,7 @@ fn main() {
             polly_describe_voices,
             polly_synthesize_line,
             polly_generate_prompts,
+            get_system_theme,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

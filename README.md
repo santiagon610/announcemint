@@ -48,17 +48,85 @@ cargo build --release --manifest-path src-tauri/Cargo.toml
 - **Rust** (for the backend and CLI)
 - **AWS credentials** with `polly:DescribeVoices` and `polly:SynthesizeSpeech` (env vars, `~/.aws` config, or manual entry in Settings)
 
+### Linux: system libraries for the GUI
+
+The desktop app uses WebKitGTK. Install the development packages so `pkg-config` can find them (e.g. for `just gui` or `npm run tauri dev`).
+
+- **Fedora / RHEL**:
+  ```bash
+  sudo dnf install webkit2gtk4.1-devel libsoup3-devel
+  ```
+  (On some Fedora versions you may need `javascriptcoregtk4.1-devel` if the above is not enough.)
+
+- **Debian / Ubuntu**:
+  ```bash
+  sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev
+  ```
+
+If the build still reports a missing `.pc` file:
+
+- **Using Linuxbrew or Homebrew on Linux**: That `pkg-config` only searches Homebrew’s prefix, so it never sees system libraries. Prepend the system pkg-config directory so the WebKit/GTK `.pc` files are found:
+  ```bash
+  export PKG_CONFIG_PATH="/usr/lib64/pkgconfig:$PKG_CONFIG_PATH"
+  ```
+  Then run `just gui` (or `npm run tauri dev`) in the same shell. You can add that line to your shell profile if you use the GUI often.
+
+- Otherwise, set `PKG_CONFIG_PATH` to the directory that contains the `.pc` file, or install the matching `-devel` / `-dev` package for that library.
+
+### Linux: dark mode and window theme
+
+On Linux, Tauri does not yet reliably propagate the system theme to the WebView or native window (see [tauri#9427](https://github.com/tauri-apps/tauri/issues/9427)). The app works around this by reading the **XDG Settings portal** (`org.freedesktop.appearance.color-scheme`) and applying dark/light to the in-app UI. So the **content** of the window should follow your system dark/light preference. The **window border and title bar** are drawn by the desktop and may stay light until Tauri/tao adds full Linux theme support; there is no theme option in `tauri.conf.json` for Linux (it is only implemented on Windows and macOS).
+
+### Flatpak
+
+When the app is packaged as a Flatpak, the same Settings portal is used for color-scheme. The portal is normally available inside the sandbox, so dark mode detection should work without extra configuration. If you build a Flatpak manifest, you do not need to add special permissions for theme detection. Ensure the Flatpak runtime provides `xdg-desktop-portal` (standard with GNOME/KDE runtimes).
+
 ## Development
 
-```bash
-npm install
-```
+### Bootstrap (first-time setup)
+
+Before running the GUI or building the app, set up the repo once:
+
+1. **Install dependencies** (Node and Tauri CLI):
+   ```bash
+   npm install
+   ```
+   If you see `tauri: command not found` when running `just gui`, the Tauri CLI is missing — run `npm install` from the project root.
+
+2. **Create the frontend build output** so Tauri can load the UI. The config expects `dist/` at the project root. Either build the frontend once:
+   ```bash
+   npm run build
+   ```
+   or create an empty directory (the app will start but the window will have no UI until you run `npm run build`):
+   ```bash
+   mkdir -p dist
+   ```
+
+3. On **Linux**, install [system libraries for the GUI](#linux-system-libraries-for-the-gui) and, if you use Linuxbrew, set `PKG_CONFIG_PATH` as described there.
+
+Then you can run `just gui` or the commands below.
+
+### Daily workflow
 
 - **GUI**: `just gui` or `npm run tauri dev` (Rust is built first so the window opens when the backend is ready).
 - **CLI**: `just cli generate --output-dir ./out --text "Hello"` or `just cli generate --output-dir ./out --file prompts.txt`.
 - **Tests**: `just test` or `cargo test --manifest-path src-tauri/Cargo.toml`.
 
 Optional: use the **Tauri Development** launch config in VS Code (Run and Debug) to run the GUI.
+
+### Common issues
+
+- **`frontendDist` configuration is set to `"../dist"` but this path doesn't exist**  
+  Tauri requires the `dist/` directory (built frontend). Run `npm run build` once to create it, or `mkdir -p dist` for an empty placeholder.
+
+- **`tauri: command not found`**  
+  The Tauri CLI is provided by npm. Run `npm install` in the project root so `node_modules/.bin` includes it; then use `just gui` or `npm run tauri dev` (do not run `tauri` directly unless it’s on your PATH).
+
+- **Blank window on first open (dev)**  
+  The window can open before the Vite dev server is ready. Reload the window (e.g. Ctrl+R / Cmd+R) or start the dev server first (`npm run dev`), then run `just gui` in another terminal.
+
+- **Title bar**  
+  The native title bar is drawn by the OS and does not follow the app’s CSS or dark mode. To have the title bar match the app, you’d need to set `decorations: false` and implement a custom HTML/CSS title bar with a drag region (and optionally window controls via the Tauri window API).
 
 ## Build
 

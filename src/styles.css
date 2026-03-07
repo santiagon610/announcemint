@@ -1,5 +1,9 @@
 /* Theme derived from icon.svg: mint #A8E6CF and white. System light/dark via prefers-color-scheme. HiDPI-friendly. */
+/* Red Hat fonts: Display for UI, Text for inputs, Mono for fixed-width (see https://github.com/RedHatOfficial/RedHatFont). */
 :root {
+  --font-display: "Red Hat Display", system-ui, sans-serif;
+  --font-text: "Red Hat Text", system-ui, sans-serif;
+  --font-mono: "Red Hat Mono", ui-monospace, monospace;
   --color-bg: #f0f9f4;
   --color-surface: #ffffff;
   --color-text: #1a2e22;
@@ -11,6 +15,7 @@
   --color-error: #dc2626;
 }
 
+/* Dark mode: prefer Tauri window theme (fixes Linux WebView), fall back to system preference. */
 @media (prefers-color-scheme: dark) {
   :root {
     --color-bg: #0f1f18;
@@ -25,6 +30,18 @@
   }
 }
 
+html[data-theme="dark"] {
+  --color-bg: #0f1f18;
+  --color-surface: #1a2e24;
+  --color-text: #e8f5ee;
+  --color-text-muted: #9bb8a8;
+  --color-border: #2d4a3c;
+  --color-primary: #7dd4a8;
+  --color-primary-hover: #a8e6cf;
+  --color-accent: #5bc48a;
+  --color-error: #ef4444;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -35,21 +52,78 @@ html {
 
 body {
   margin: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  font-family: var(--font-display);
   background: var(--color-bg);
   color: var(--color-text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 #app {
   min-height: 100vh;
+}
+
+/* Custom title bar (used when decorations: false). Uses app theme variables. Full viewport width so it resizes with the window. */
+.titlebar {
+  height: 2rem;
+  min-height: 2rem;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-top: -1.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0 1.5rem 0 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  user-select: none;
+  -webkit-user-select: none;
+  flex-shrink: 0;
+}
+.titlebar-drag {
+  flex: 1;
+  padding: 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.titlebar-controls {
+  display: flex;
+  align-items: stretch;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.titlebar-btn {
+  width: 2.5rem;
+  height: 2rem;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.titlebar-btn:hover {
+  background: var(--color-border);
+}
+.titlebar-btn-close:hover {
+  background: var(--color-error);
+  color: white;
 }
 
 button {
@@ -69,10 +143,45 @@ button:hover {
 input,
 textarea,
 select {
-  font: inherit;
+  font-family: var(--font-text);
+  font-size: inherit;
+  line-height: inherit;
   background: var(--color-surface);
   color: var(--color-text);
   border: 1px solid var(--color-border);
   border-radius: 0.375rem;
   padding: 0.5rem 0.75rem;
+}
+
+/* Force select to use our theme (native widget can show white on white in dark mode) */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234a6b5c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 2rem;
+}
+html[data-theme="dark"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239bb8a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* Dropdown options follow theme */
+select option {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+input,
+textarea {
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Fixed-width for paths, ARNs, identifiers */
+.font-mono {
+  font-family: var(--font-mono);
 }

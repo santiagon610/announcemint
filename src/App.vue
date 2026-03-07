@@ -2,8 +2,10 @@
 import { ref, onMounted, computed, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open, confirm } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { APP_NAME, GITHUB_REPO, HELP_DOCS_URL } from "./app-config";
 
 const outputDir = ref<string | null>(null);
@@ -63,7 +65,10 @@ const checkingCredentials = ref(false);
 const awsRegionsList = ref<string[]>([]);
 const showAbout = ref(false);
 const appVersion = ref("");
-const openDrawer = ref<"aws" | "voice" | "destination" | null>(null);
+const openDrawer = ref<"aws" | "voice" | "destination" | "dangerzone" | null>(
+  null,
+);
+const openAwsSubdrawer = ref<"account" | "proxy" | null>(null);
 const rememberPrompts = ref(true);
 const promptFileNameFormat = ref("hyphen");
 
@@ -514,8 +519,79 @@ watch(
   },
 );
 
+/** Sync window theme after mount so app content follows dark/light. Runs in Vue lifecycle so it cannot block initial render. On Linux uses get_system_theme (XDG portal). */
+function minimizeWindow(): void {
+  getCurrentWindow().minimize();
+}
+function toggleMaximizeWindow(): void {
+  getCurrentWindow().toggleMaximize();
+}
+function closeWindow(): void {
+  getCurrentWindow().close();
+}
+
+const resettingConfig = ref(false);
+
+async function resetConfigAndRelaunch(): Promise<void> {
+  const confirmed = await confirm(
+    "This will permanently delete your config file and restart the app. All saved settings (voice, AWS profile, output folder, etc.) will be lost. Only do this if you are sure.",
+    {
+      title: "Reset settings?",
+      kind: "warning",
+      okLabel: "Delete config and restart",
+      cancelLabel: "Cancel",
+    },
+  );
+  if (!confirmed) return;
+  try {
+    resettingConfig.value = true;
+    await invoke("delete_config_file");
+    await relaunch();
+  } catch (e) {
+    error.value = String(e);
+    resettingConfig.value = false;
+  }
+}
+
+function initThemeSync(): void {
+  (async () => {
+    const log = (msg: string, ...args: unknown[]) =>
+      console.log("[theme]", msg, ...args);
+    try {
+      const win = getCurrentWindow();
+      const setTheme = (theme: string | null, source?: string) => {
+        const v = theme === "dark" ? "dark" : "light";
+        document.documentElement.dataset.theme = v;
+        if (source) log("set theme:", v, `(${source})`);
+      };
+      const portalTheme = await invoke<string | null>("get_system_theme").catch(
+        (e) => {
+          log("get_system_theme failed, using window theme", e);
+          return null;
+        },
+      );
+      if (portalTheme === "dark" || portalTheme === "light") {
+        setTheme(portalTheme, "portal");
+      } else {
+        const windowTheme = await win.theme().catch((e) => {
+          log("window.theme() failed", e);
+          return null;
+        });
+        setTheme(windowTheme, "window");
+      }
+      await win.onThemeChanged((ev) =>
+        setTheme(ev.payload, "onThemeChanged"),
+      );
+      log("listening for theme changes");
+    } catch (e) {
+      console.warn("[theme] sync failed, using prefers-color-scheme", e);
+    }
+  })();
+}
+
 onMounted(async () => {
   document.title = APP_NAME;
+  initThemeSync();
   try {
     awsRegionsList.value = await invoke<string[]>("list_aws_regions");
   } catch (e) {
@@ -537,6 +613,35 @@ onMounted(async () => {
 
 <template>
   <div class="app">
+    <header class="titlebar">
+      <div class="titlebar-drag" data-tauri-drag-region>{{ APP_NAME }}</div>
+      <div class="titlebar-controls">
+        <button
+          type="button"
+          class="titlebar-btn"
+          title="Minimize"
+          @click="minimizeWindow"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 13H5v-2h14z"/></svg>
+        </button>
+        <button
+          type="button"
+          class="titlebar-btn"
+          title="Maximize"
+          @click="toggleMaximizeWindow"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16v16H4zm2 2v12h12V6z"/></svg>
+        </button>
+        <button
+          type="button"
+          class="titlebar-btn titlebar-btn-close"
+          title="Close"
+          @click="closeWindow"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+    </header>
     <!-- Main view: prompts + generate -->
     <template v-if="currentView === 'main'">
       <header class="header">
@@ -651,87 +756,33 @@ onMounted(async () => {
               >▼</span
             >
           </button>
-          <div v-show="openDrawer === 'aws'" class="drawer-body">
-            <h3 class="drawer-section-title">Network Proxy</h3>
-            <div class="form-row form-row-checkbox proxy-toggle-row">
-              <label class="checkbox-label">
-                <input v-model="awsProxyEnabled" type="checkbox" />
-                Use an HTTP(S) or SOCKS proxy to access AWS
-              </label>
-            </div>
-            <div v-show="awsProxyEnabled" class="drawer-fields proxy-fields">
-              <div class="form-row">
-                <label>Proxy Protocol</label>
-                <select v-model="awsProxyProtocol">
-                  <option value="http">HTTP</option>
-                  <option value="https">HTTPS</option>
-                  <option value="socks">SOCKS</option>
-                </select>
-              </div>
-              <div class="form-row">
-                <label>Proxy Host</label>
-                <input
-                  v-model="awsProxyHost"
-                  type="text"
-                  placeholder="FQDN or IP address"
-                  autocomplete="off"
-                />
-              </div>
-              <div class="form-row">
-                <label>Proxy Port</label>
-                <input
-                  v-model="awsProxyPort"
-                  type="number"
-                  placeholder="e.g. 8080"
-                  min="1"
-                  max="65535"
-                  autocomplete="off"
-                />
-              </div>
-              <div class="form-row">
-                <label>Proxy Username</label>
-                <input
-                  v-model="awsProxyUsername"
-                  type="text"
-                  placeholder="Optional"
-                  autocomplete="off"
-                />
-              </div>
-              <div class="form-row">
-                <label>Proxy Password</label>
-                <input
-                  v-model="awsProxyPassword"
-                  type="password"
-                  placeholder="Optional"
-                  autocomplete="new-password"
-                />
-              </div>
-              <div class="form-row credentials-check-row">
-                <button
-                  type="button"
-                  class="btn-secondary"
-                  :disabled="testingProxy"
-                  @click="testProxyConfig"
-                >
-                  {{ testingProxy ? "Testing…" : "Test proxy" }}
-                </button>
-              </div>
-              <p
-                v-if="proxyTestMessage"
-                :class="
-                  proxyTestMessage.ok ? 'proxy-test-ok' : 'credentials-error'
+          <div v-show="openDrawer === 'aws'" class="drawer-body drawer-body-no-border">
+            <!-- Subdrawer: AWS Account -->
+            <div class="subdrawer">
+              <button
+                type="button"
+                class="subdrawer-header"
+                :aria-expanded="openAwsSubdrawer === 'account'"
+                @click="
+                  openAwsSubdrawer =
+                    openAwsSubdrawer === 'account' ? null : 'account'
                 "
               >
-                {{ proxyTestMessage.text }}
-              </p>
-            </div>
-
-            <hr class="drawer-separator" aria-hidden="true" />
-
-            <h3 class="drawer-section-title">AWS Account</h3>
-            <div class="form-row credential-toggle-row">
-              <label class="toggle-label">Credential source</label>
-              <div class="toggle-buttons">
+                <span class="subdrawer-title">AWS Account</span>
+                <span
+                  class="drawer-chevron"
+                  :class="{ open: openAwsSubdrawer === 'account' }"
+                  aria-hidden="true"
+                  >▼</span
+                >
+              </button>
+              <div
+                v-show="openAwsSubdrawer === 'account'"
+                class="subdrawer-body"
+              >
+                <div class="form-row credential-toggle-row">
+                  <label class="toggle-label">Credential source</label>
+                  <div class="toggle-buttons">
                 <button
                   type="button"
                   :class="[
@@ -754,10 +805,10 @@ onMounted(async () => {
                 >
                   Manual credentials
                 </button>
-              </div>
-            </div>
+                  </div>
+                </div>
 
-            <template v-if="awsUseManualCredentials">
+                <template v-if="awsUseManualCredentials">
               <div class="drawer-fields">
                 <div class="form-row">
                   <label>AWS Region</label>
@@ -857,7 +908,7 @@ onMounted(async () => {
                 <tbody>
                   <tr>
                     <th>Config file</th>
-                    <td>
+                    <td class="font-mono">
                       {{ credentialsAndPermissionsResult.config_source ?? "—" }}
                     </td>
                   </tr>
@@ -880,7 +931,7 @@ onMounted(async () => {
                   <tr>
                     <th>ARN</th>
                     <td class="arn-cell">
-                      <span class="arn-text">{{
+                      <span class="arn-text font-mono">{{
                         credentialsAndPermissionsResult.arn ?? "—"
                       }}</span>
                     </td>
@@ -910,6 +961,108 @@ onMounted(async () => {
               Configure AWS credentials above, or set AWS_PROFILE /
               ~/.aws/credentials.
             </p>
+              </div>
+            </div>
+
+            <!-- Subdrawer: Network Proxy -->
+            <div class="subdrawer">
+              <button
+                type="button"
+                class="subdrawer-header"
+                :aria-expanded="openAwsSubdrawer === 'proxy'"
+                @click="
+                  openAwsSubdrawer =
+                    openAwsSubdrawer === 'proxy' ? null : 'proxy'
+                "
+              >
+                <span class="subdrawer-title">Network Proxy</span>
+                <span
+                  class="drawer-chevron"
+                  :class="{ open: openAwsSubdrawer === 'proxy' }"
+                  aria-hidden="true"
+                  >▼</span
+                >
+              </button>
+              <div
+                v-show="openAwsSubdrawer === 'proxy'"
+                class="subdrawer-body"
+              >
+                <div class="form-row form-row-checkbox proxy-toggle-row">
+                  <label class="checkbox-label">
+                    <input v-model="awsProxyEnabled" type="checkbox" />
+                    Use an HTTP(S) or SOCKS proxy to access AWS
+                  </label>
+                </div>
+                <div v-show="awsProxyEnabled" class="drawer-fields proxy-fields">
+                  <div class="form-row">
+                    <label>Proxy Protocol</label>
+                    <select v-model="awsProxyProtocol">
+                      <option value="http">HTTP</option>
+                      <option value="https">HTTPS</option>
+                      <option value="socks">SOCKS</option>
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <label>Proxy Host</label>
+                    <input
+                      v-model="awsProxyHost"
+                      type="text"
+                      placeholder="FQDN or IP address"
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div class="form-row">
+                    <label>Proxy Port</label>
+                    <input
+                      v-model="awsProxyPort"
+                      type="number"
+                      placeholder="e.g. 8080"
+                      min="1"
+                      max="65535"
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div class="form-row">
+                    <label>Proxy Username</label>
+                    <input
+                      v-model="awsProxyUsername"
+                      type="text"
+                      placeholder="Optional"
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div class="form-row">
+                    <label>Proxy Password</label>
+                    <input
+                      v-model="awsProxyPassword"
+                      type="password"
+                      placeholder="Optional"
+                      autocomplete="new-password"
+                    />
+                  </div>
+                  <div class="form-row credentials-check-row">
+                    <button
+                      type="button"
+                      class="btn-secondary"
+                      :disabled="testingProxy"
+                      @click="testProxyConfig"
+                    >
+                      {{ testingProxy ? "Testing…" : "Test proxy" }}
+                    </button>
+                  </div>
+                  <p
+                    v-if="proxyTestMessage"
+                    :class="
+                      proxyTestMessage.ok
+                        ? 'proxy-test-ok'
+                        : 'credentials-error'
+                    "
+                  >
+                    {{ proxyTestMessage.text }}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -1017,6 +1170,44 @@ onMounted(async () => {
                     {{ opt.label }}
                   </option>
                 </select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Danger Zone -->
+        <section class="drawer accordion-drawer drawer-danger">
+          <button
+            type="button"
+            class="drawer-header"
+            :aria-expanded="openDrawer === 'dangerzone'"
+            @click="
+              openDrawer = openDrawer === 'dangerzone' ? null : 'dangerzone'
+            "
+          >
+            <h2 class="drawer-title">Danger Zone</h2>
+            <span
+              class="drawer-chevron"
+              :class="{ open: openDrawer === 'dangerzone' }"
+              aria-hidden="true"
+              >▼</span
+            >
+          </button>
+          <div v-show="openDrawer === 'dangerzone'" class="drawer-body">
+            <div class="drawer-fields">
+              <p class="danger-zone-desc">
+                Permanently delete the app config file and restart. All saved
+                settings will be lost.
+              </p>
+              <div class="form-row">
+                <button
+                  type="button"
+                  class="btn-danger"
+                  :disabled="resettingConfig"
+                  @click="resetConfigAndRelaunch"
+                >
+                  {{ resettingConfig ? "Resetting…" : "Delete config and restart" }}
+                </button>
               </div>
             </div>
           </div>
@@ -1161,6 +1352,44 @@ onMounted(async () => {
   padding: 0 1.25rem 1.25rem;
   border-top: 1px solid var(--color-border);
 }
+.drawer-body-no-border {
+  border-top: none;
+}
+.subdrawer {
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+.subdrawer:last-child {
+  margin-bottom: 0;
+}
+.subdrawer-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+.subdrawer-header:hover {
+  background: var(--color-bg);
+}
+.subdrawer-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.subdrawer-body {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid var(--color-border);
+}
 .drawer-title {
   font-size: 1rem;
   font-weight: 600;
@@ -1291,6 +1520,30 @@ onMounted(async () => {
 }
 .btn-secondary:hover {
   background: var(--color-border);
+}
+.btn-danger {
+  background: var(--color-error);
+  color: #fff;
+  border: 1px solid var(--color-error);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font: inherit;
+}
+.btn-danger:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.btn-danger:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.drawer-danger .drawer-title {
+  color: var(--color-error);
+}
+.danger-zone-desc {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
 }
 .progress-panel {
   margin-top: 1rem;
