@@ -116,6 +116,9 @@ Optional: use the **Tauri Development** launch config in VS Code (Run and Debug)
 
 ### Common issues
 
+- **`just gui` fails with "webkit2gtk-4.1", "libsoup-3.0", or "javascriptcoregtk-4.1" not found**  
+  You need the Linux system libraries for the GUI. See [Linux: system libraries for the GUI](#linux-system-libraries-for-the-gui). On Fedora you can run `just gui-deps` to print the install command.
+
 - **`frontendDist` configuration is set to `"../dist"` but this path doesn't exist**  
   Tauri requires the `dist/` directory (built frontend). Run `npm run build` once to create it, or `mkdir -p dist` for an empty placeholder.
 

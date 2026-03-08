@@ -11,9 +11,16 @@ test:
 
 # Run the desktop GUI locally (dev server + Tauri window).
 # Build Rust first so the app window opens only after the backend is ready.
+# On Linux, if the build fails with missing webkit2gtk/libjavascriptcore/libsoup, run: just gui-deps
 gui:
     cargo build --manifest-path src-tauri/Cargo.toml
     npm run tauri dev
+
+# Print Linux system packages required for the GUI (Fedora). See README for other distros and PKG_CONFIG_PATH.
+gui-deps:
+    @echo "On Fedora/RHEL, install WebKitGTK deps:"
+    @echo "  sudo dnf install webkit2gtk4.1-devel libsoup3-devel javascriptcoregtk4.1-devel"
+    @echo "If PKG_CONFIG_PATH is set by Homebrew, run: export PKG_CONFIG_PATH=\"/usr/lib64/pkgconfig:$$PKG_CONFIG_PATH\""
 
 gui-build-macos:
     cargo build --manifest-path src-tauri/Cargo.toml
