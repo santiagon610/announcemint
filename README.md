@@ -4,6 +4,10 @@ Convert text to speech using **AWS Polly**, with presets for two-way radio voice
 
 App name, publisher, docs URL, and GitHub repo are set in **`brand.json`** at the project root so you can rebrand in one place (see [Rebranding](#rebranding)).
 
+### Getting the app
+
+Prebuilt installers (Windows MSI, macOS .app, Linux AppImage) are published on the [Releases](https://github.com/hlvtechnologies/announcemint/releases) page. You need [AWS credentials](#requirements) with Polly permissions before generating speech.
+
 ## Features
 
 ### Desktop app
@@ -17,7 +21,7 @@ App name, publisher, docs URL, and GitHub repo are set in **`brand.json`** at th
 
 - **Network Proxy**: Optional HTTP/HTTPS/SOCKS proxy (protocol, host, port, username, password). **Test proxy** checks that the app can reach the AWS API through the proxy.
 - **AWS Account**: Credential source (AWS config file or manual keys). Config directory and profile selection; **Check credentials and permissions** validates auth and reports User ID, Account, ARN, Region, config file path, public IP, and whether `polly:DescribeVoices` and `polly:SynthesizeSpeech` are granted.
-- **Voice Options**: Language (including system locale), engine (standard/neural), voice, output preset (e.g. OGG Vorbis, Two-Way Voice Prompt WAV). Option to remember prompt names after closing.
+- **Voice Options**: Language (including system locale), engine (standard/neural), voice, output preset (e.g. OGG Vorbis, WAV: Two-Way Radio Voice Prompt). Option to remember prompt names after closing.
 - **Saving Prompts**: Output directory and **Filename Formatting** (e.g. hyphens, underscores, lower/upper case).
 
 Configuration is stored in a platform-specific user config directory (e.g. `~/.config/<publisher>/<appName>/config.json`), where `publisher` and `appName` come from `brand.json`.
@@ -25,7 +29,7 @@ Configuration is stored in a platform-specific user config directory (e.g. `~/.c
 ### Output presets
 
 - **OGG Vorbis**: Polly output as-is.
-- **WAV: Two-Way Voice Prompt**: 8 kHz, 16-bit, mono, little endian. In-app Ogg→WAV conversion (no SoX).
+- **WAV: Two-Way Radio Voice Prompt**: 8 kHz, 16-bit, mono, little endian. In-app Ogg→WAV conversion (no SoX).
 
 ### CLI
 
@@ -36,7 +40,7 @@ Same generation logic as the app. Prompts from `--file` or `--text`; output dire
 cargo build --release --manifest-path src-tauri/Cargo.toml
 
 # Generate
-./src-tauri/target/release/announcemint generate --output-dir ./out --file prompts.txt --preset "WAV: Two-Way Voice Prompt"
+./src-tauri/target/release/announcemint generate --output-dir ./out --file prompts.txt --preset "WAV: Two-Way Radio Voice Prompt"
 ```
 
 **Options**: `--output-dir` / `-o`, `--file` / `-f`, `--text` / `-t`, `--voice-id`, `--engine`, `--preset` / `-p`.  

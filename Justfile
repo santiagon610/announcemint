@@ -28,7 +28,7 @@ gui-build-macos:
 
 # Run the CLI. Uses same config as GUI when present. Examples:
 #   just cli generate --output-dir ./out --text "Hello"
-#   just cli generate --output-dir ./out --file prompts.txt --preset "Two-Way Voice Prompt"
+#   just cli generate --output-dir ./out --file prompts.txt --preset "WAV: Two-Way Radio Voice Prompt"
 #   just cli list-presets
 #   just cli list-voices
 #   just cli check-credentials
