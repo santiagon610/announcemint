@@ -77,10 +77,6 @@ If the build still reports a missing `.pc` file:
 
 On Linux, Tauri does not yet reliably propagate the system theme to the WebView or native window (see [tauri#9427](https://github.com/tauri-apps/tauri/issues/9427)). The app works around this by reading the **XDG Settings portal** (`org.freedesktop.appearance.color-scheme`) and applying dark/light to the in-app UI. So the **content** of the window should follow your system dark/light preference. The **window border and title bar** are drawn by the desktop and may stay light until Tauri/tao adds full Linux theme support; there is no theme option in `tauri.conf.json` for Linux (it is only implemented on Windows and macOS).
 
-### Flatpak
-
-When the app is packaged as a Flatpak, the same Settings portal is used for color-scheme. The portal is normally available inside the sandbox, so dark mode detection should work without extra configuration. If you build a Flatpak manifest, you do not need to add special permissions for theme detection. Ensure the Flatpak runtime provides `xdg-desktop-portal` (standard with GNOME/KDE runtimes).
-
 ## Development
 
 ### Bootstrap (first-time setup)
@@ -135,7 +131,7 @@ Optional: use the **Tauri Development** launch config in VS Code (Run and Debug)
 
 - **Windows (MSI)**: On Windows with WiX installed, `npm run tauri build` produces an MSI in `src-tauri/target/release/bundle/msi/`.
 - **macOS (.app)**: On macOS, `npm run tauri build` produces the app bundle (e.g. in `src-tauri/target/release/bundle/macos/`).
-- **Linux**: `npm run tauri build` produces .deb and AppImage. For Flatpak, use a separate Flatpak manifest and build with `flatpak-builder`.
+- **Linux**: `npm run tauri build` produces .deb and AppImage. In environments without FUSE (e.g. Docker, CI), set `APPIMAGE_EXTRACT_AND_RUN=1` so the linuxdeploy AppImage can run.
 
 ## Rebranding
 

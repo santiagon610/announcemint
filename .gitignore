@@ -218,15 +218,6 @@ yarn.lock
 # Vite / build
 dist/
 
-# Flatpak (generated from brand.json via npm run sync-brand)
-flatpak/manifest.yml
-flatpak/metainfo.xml
-flatpak/.app-id
-flatpak/*.deb
-flatpak/build-dir/
-flatpak/repo/
-*.flatpak
-
 # Tauri / Rust
 src-tauri/target/
 src-tauri/gen/

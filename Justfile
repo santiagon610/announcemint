@@ -26,16 +26,6 @@ gui-build-macos:
     cargo build --manifest-path src-tauri/Cargo.toml
     npm run tauri build -- --bundles app
 
-# Build Flatpak for Linux (requires flatpak, flatpak-builder, and GNOME runtime).
-# Run `flatpak install flathub org.gnome.Platform//46 org.gnome.Sdk//46` first.
-# Manifest and metainfo are generated from brand.json by npm run sync-brand.
-flatpak:
-    npm run tauri build -- --bundles deb --ci
-    npm run prepare-flatpak-deb
-    flatpak-builder --repo=repo --force-clean build-dir flatpak/manifest.yml
-    flatpak build-bundle repo $(cat flatpak/.app-id).flatpak $(cat flatpak/.app-id)
-    @echo "Built $(cat flatpak/.app-id).flatpak. Install with: flatpak install $(cat flatpak/.app-id).flatpak"
-
 # Run the CLI. Uses same config as GUI when present. Examples:
 #   just cli generate --output-dir ./out --text "Hello"
 #   just cli generate --output-dir ./out --file prompts.txt --preset "Two-Way Voice Prompt"

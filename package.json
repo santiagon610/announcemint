@@ -6,7 +6,6 @@
   "scripts": {
     "sync-version": "node scripts/sync-version.js",
     "sync-brand": "node scripts/sync-brand.js",
-    "prepare-flatpak-deb": "node scripts/prepare-flatpak-deb.js",
     "dev": "vite",
     "build": "npm run sync-version && npm run sync-brand && vue-tsc -b && vite build",
     "preview": "vite preview",
