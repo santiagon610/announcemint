@@ -86,6 +86,8 @@ jobs:
       - run: npm run tauri build -- --bundles appimage --ci
         env:
           APPIMAGE_EXTRACT_AND_RUN: 1
+          # Use gzip so AppImageLauncher (libsquashfs with only xz/zlib) can read the image
+          LDAI_COMP: gzip
 
       - uses: actions/upload-artifact@v4
         with:
