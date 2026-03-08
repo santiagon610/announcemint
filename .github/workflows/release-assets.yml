@@ -1,10 +1,12 @@
 # Build installers and attach them to the GitHub Release created by Release Please.
-# Runs when a release is published (after the release PR is merged).
-name: Release assets
+# Triggers on tag push (e.g. v1.0.0) because release:published does not fire when
+# the release is created by another workflow using GITHUB_TOKEN.
+name: Release Assets
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -16,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.ref_name }}
 
       - uses: actions/setup-node@v4
         with:
@@ -41,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.ref_name }}
 
       - uses: actions/setup-node@v4
         with:
@@ -69,7 +71,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.ref_name }}
 
       - run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
@@ -102,7 +104,7 @@ jobs:
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.release.tag_name }}
+          tag_name: ${{ github.ref_name }}
           files: |
             artifacts/windows-msi/*.msi
             artifacts/macos-app/*.zip
