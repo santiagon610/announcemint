@@ -1,8 +1,8 @@
 {
-  "publisher": "santiagon610",
+  "publisher": "HLV Technologies, LLC",
   "appName": "Announcemint",
   "docsUrl": "https://docs.announcemint.app",
-  "githubRepo": "https://www.github.com/santiagon610/announcemint",
+  "githubRepo": "https://www.github.com/hlvtechnologies/announcemint",
   "shortDescription": "AWS Polly text-to-speech with presets",
   "longDescription": "Convert text to speech using AWS Polly. Supports presets for two-way radio prompts and more."
 }
