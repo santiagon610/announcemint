@@ -614,7 +614,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="app">
+  <div class="app" :class="{ 'settings-view': currentView === 'settings' }">
     <header class="titlebar" :class="{ macos: isMac }">
       <div class="titlebar-drag" data-tauri-drag-region>{{ APP_NAME }}</div>
       <div class="titlebar-controls">
@@ -1327,10 +1327,13 @@ onMounted(async () => {
 .app {
   max-width: 56rem;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 2.75rem 1.5rem 1.5rem 1.5rem; /* top clears fixed titlebar (2rem + 0.75rem gap) */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+.app.settings-view {
+  overflow-x: hidden;
 }
 .header {
   display: flex;
@@ -1368,7 +1371,8 @@ onMounted(async () => {
 }
 .settings-page {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
+  overflow: auto;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;

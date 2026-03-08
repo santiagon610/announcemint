@@ -66,14 +66,16 @@ body {
   min-height: 100vh;
 }
 
-/* Custom title bar (used when decorations: false). Uses app theme variables. Full viewport width so it resizes with the window. */
+/* Custom title bar (used when decorations: false). Uses app theme variables. Full viewport width so it resizes with the window. Fixed so it stays anchored when the page scrolls. */
 .titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   height: 2rem;
   min-height: 2rem;
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-top: -1.5rem;
-  margin-bottom: 0.75rem;
+  width: 100%;
   padding: 0 1.5rem 0 0.75rem;
   display: flex;
   align-items: center;
@@ -82,7 +84,6 @@ body {
   border-bottom: 1px solid var(--color-border);
   user-select: none;
   -webkit-user-select: none;
-  flex-shrink: 0;
 }
 .titlebar-drag {
   flex: 1;
