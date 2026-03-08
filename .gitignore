@@ -144,6 +144,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# macOS
+.DS_Store
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -205,3 +208,23 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Node
+node_modules/
+npm-debug.log*
+pnpm-lock.yaml
+yarn.lock
+
+# Vite / build
+dist/
+
+# Tauri / Rust
+src-tauri/target/
+src-tauri/gen/
+*.rs.bk
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/launch.json
+!.vscode/extensions.json

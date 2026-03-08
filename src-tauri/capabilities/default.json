@@ -1,0 +1,40 @@
+{
+  "identifier": "main-capability",
+  "description": "Capability for the main window",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "core:path:default",
+    "core:window:default",
+    "core:window:allow-close",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-start-dragging",
+    "cli:default",
+    "dialog:default",
+    "fs:default",
+    "process:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://docs.announcemint.app"
+        },
+        {
+          "url": "https://docs.announcemint.app/*"
+        },
+        {
+          "url": "https://www.gnu.org/*"
+        },
+        {
+          "url": "https://github.com/*"
+        },
+        {
+          "url": "https://www.github.com/*"
+        }
+      ]
+    }
+  ]
+}

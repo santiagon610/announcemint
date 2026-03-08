@@ -1,0 +1,149 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Announcemint",
+  "version": "0.0.0",
+  "identifier": "com.santiagon610.announcemint",
+  "build": {
+    "beforeDevCommand": "npm run sync-version && npm run sync-brand && node scripts/start-dev-and-wait.js",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Announcemint",
+        "width": 900,
+        "height": 700,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": null,
+      "timestampUrl": "",
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      },
+      "allowDowngrades": false
+    },
+    "android": {
+      "minSdkVersion": 24,
+      "autoIncrementVersionCode": false
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.13",
+      "hardenedRuntime": true
+    },
+    "linux": {
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    },
+    "longDescription": "Convert text to speech using AWS Polly. Supports presets for two-way radio prompts and more.",
+    "shortDescription": "AWS Polly text-to-speech with presets",
+    "category": "Utility"
+  },
+  "plugins": {
+    "cli": {
+      "description": "Announcemint – AWS Polly text-to-speech",
+      "subcommands": {
+        "generate": {
+          "description": "Generate voice prompts from text (one per line)",
+          "args": [
+            {
+              "name": "output-dir",
+              "short": "o",
+              "description": "Output directory for generated audio files",
+              "takesValue": true,
+              "required": true
+            },
+            {
+              "name": "text",
+              "short": "t",
+              "description": "Text to synthesize (one prompt per line)",
+              "takesValue": true
+            },
+            {
+              "name": "file",
+              "short": "f",
+              "description": "Path to file with one prompt per line",
+              "takesValue": true
+            },
+            {
+              "name": "voice-id",
+              "description": "Polly voice ID (e.g. Joanna)",
+              "takesValue": true
+            },
+            {
+              "name": "engine",
+              "description": "Polly engine: standard or neural",
+              "takesValue": true,
+              "possibleValues": [
+                "standard",
+                "neural"
+              ]
+            },
+            {
+              "name": "language-code",
+              "description": "Language code (e.g. en-US)",
+              "takesValue": true
+            },
+            {
+              "name": "preset",
+              "short": "p",
+              "description": "Output preset name (e.g. two-way-voice-prompt)",
+              "takesValue": true
+            },
+            {
+              "name": "prompt-file-name-format",
+              "description": "Filename format: none, hyphen, hyphen_lower, hyphen_upper, underscore, underscore_lower, underscore_upper",
+              "takesValue": true
+            },
+            {
+              "name": "config-file",
+              "description": "Path to config file (default: app config dir)",
+              "takesValue": true
+            },
+            {
+              "name": "dry-run",
+              "description": "Print output paths without generating",
+              "takesValue": false
+            }
+          ]
+        },
+        "list-presets": {
+          "description": "List built-in output presets"
+        },
+        "list-voices": {
+          "description": "List available Polly voices"
+        },
+        "check-credentials": {
+          "description": "Check AWS credentials and Polly permissions"
+        },
+        "test-proxy": {
+          "description": "Test proxy configuration with Polly"
+        }
+      }
+    }
+  }
+}
