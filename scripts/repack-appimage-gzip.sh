@@ -2,7 +2,8 @@
 # Repack an AppImage so its squashfs uses gzip compression.
 # This allows AppImageLauncher (and older libsquashfs that only support xz/zlib) to read the image.
 # Usage: repack-appimage-gzip.sh <path-to.AppImage>
-# Requires: squashfs-tools (mksquashfs, unsquashfs)
+# Requires: squashfs-tools (mksquashfs)
+# Uses the AppImage runtime's --appimage-extract for reliable extraction across formats and compression.
 
 set -euo pipefail
 
@@ -16,30 +17,41 @@ if [ ! -f "$APPIMAGE" ]; then
   echo "Not a file: $APPIMAGE" >&2
   exit 1
 fi
+APPIMAGE=$(cd "$(dirname "$APPIMAGE")" && pwd)/$(basename "$APPIMAGE")
 
-# Type 2 AppImage: payload offset at byte 8, 8 bytes little-endian
-OFFSET=$(od -An -t u8 -j 8 -N 8 -v "$APPIMAGE" | tr -d ' ')
-if [ -z "$OFFSET" ] || [ "$OFFSET" -le 0 ]; then
-  echo "Could not read payload offset from $APPIMAGE (not Type 2?)" >&2
-  exit 1
-fi
+# Ensure executable for --appimage-extract / --appimage-offset
+chmod +x "$APPIMAGE"
 
 WORKDIR=$(mktemp -d)
 trap 'rm -rf "$WORKDIR"' EXIT
 
-# Split runtime and payload
-head -c "$OFFSET" "$APPIMAGE" > "$WORKDIR/runtime"
-tail -c +$((OFFSET + 1)) "$APPIMAGE" > "$WORKDIR/payload.sqfs"
+# Copy AppImage to workdir so --appimage-extract works in a clean dir
+cp "$APPIMAGE" "$WORKDIR/input.AppImage"
+chmod +x "$WORKDIR/input.AppImage"
+cd "$WORKDIR"
 
-# Extract payload (supports zstd from current build)
-unsquashfs -f -d "$WORKDIR/appdir" "$WORKDIR/payload.sqfs"
+# Use AppImage runtime's built-in extraction (handles format variations, zstd, etc.)
+if ! ./input.AppImage --appimage-extract >/dev/null 2>&1; then
+  echo "AppImage does not support --appimage-extract (not Type 2?)" >&2
+  exit 1
+fi
 
-# Repack with gzip for AppImageLauncher compatibility
-mksquashfs "$WORKDIR/appdir" "$WORKDIR/new.sqfs" -comp gzip -noappend
+# Get payload offset from runtime for reconstructing the file
+OFFSET=$(./input.AppImage --appimage-offset 2>/dev/null || true)
+if [ -z "$OFFSET" ] || [ "$OFFSET" -le 0 ]; then
+  echo "Could not get payload offset from AppImage" >&2
+  exit 1
+fi
 
-# Replace original with runtime + gzip squashfs
-cat "$WORKDIR/runtime" "$WORKDIR/new.sqfs" > "$WORKDIR/new.AppImage"
-chmod +x "$WORKDIR/new.AppImage"
-mv "$WORKDIR/new.AppImage" "$APPIMAGE"
+# Extract runtime (bytes before payload)
+head -c "$OFFSET" input.AppImage > runtime
+
+# Repack extracted squashfs-root with gzip for AppImageLauncher compatibility
+mksquashfs squashfs-root new.sqfs -comp gzip -noappend
+
+# Reconstruct AppImage
+cat runtime new.sqfs > new.AppImage
+chmod +x new.AppImage
+mv new.AppImage "$APPIMAGE"
 
 echo "Repacked $APPIMAGE with gzip compression"
