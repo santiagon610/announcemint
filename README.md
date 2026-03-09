@@ -135,7 +135,7 @@ Optional: use the **Tauri Development** launch config in VS Code (Run and Debug)
 
 - **Windows (MSI)**: On Windows with WiX installed, `npm run tauri build` produces an MSI in `src-tauri/target/release/bundle/msi/`.
 - **macOS (.app)**: On macOS, `npm run tauri build` produces the app bundle (e.g. in `src-tauri/target/release/bundle/macos/`).
-- **Linux**: `npm run tauri build` produces .deb and AppImage. In environments without FUSE (e.g. Docker, CI), set `APPIMAGE_EXTRACT_AND_RUN=1` so the linuxdeploy AppImage can run.
+- **Linux**: `npm run tauri build` produces .deb and AppImage. In environments without FUSE (e.g. Docker, CI), set `APPIMAGE_EXTRACT_AND_RUN=1` so the linuxdeploy AppImage can run. If you see “Squashfs image uses (null) compression” when launching via AppImageLauncher, run `./scripts/repack-appimage-gzip.sh path/to/foo.AppImage` or run the AppImage directly. Release builds are repacked with gzip so AppImageLauncher can read them.
 
 ## Rebranding
 
