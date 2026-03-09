@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/santiagon610/announcemint/compare/v1.0.1...v1.0.2) (2026-03-09)
+
+
+### Bug Fixes
+
+* compression for AppImage ([#7](https://github.com/santiagon610/announcemint/issues/7)) ([8c2622c](https://github.com/santiagon610/announcemint/commit/8c2622c28980c0929b6a1f2f7fddfc18e9bbb37a))
+
 ## [1.0.1](https://github.com/santiagon610/announcemint/compare/v1.0.0...v1.0.1) (2026-03-08)
 
 
