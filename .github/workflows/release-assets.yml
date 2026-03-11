@@ -34,6 +34,10 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'src-tauri'
+
       - run: npm ci
       - run: npm run tauri build -- --bundles msi --ci --no-sign
         env:
@@ -58,6 +62,10 @@ jobs:
           cache: "npm"
 
       - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'src-tauri'
 
       - run: npm ci
       - run: npm run tauri build -- --bundles app --ci --no-sign
@@ -89,6 +97,10 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'src-tauri'
+
       - run: npm ci
       - run: npm run tauri build -- --bundles appimage --ci
         env:
@@ -96,8 +108,8 @@ jobs:
 
       - name: Repack AppImage with gzip for AppImageLauncher
         run: |
+          chmod +x scripts/repack-appimage-gzip.sh
           for f in src-tauri/target/release/bundle/appimage/*.AppImage; do
-            chmod +x scripts/repack-appimage-gzip.sh
             ./scripts/repack-appimage-gzip.sh "$f"
           done
 
@@ -116,12 +128,11 @@ jobs:
           path: artifacts
 
       - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          files: |
-            artifacts/windows-msi/*.msi
-            artifacts/macos-app/*.zip
-            artifacts/linux-appimage/*.AppImage
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ env.RELEASE_TAG }}" \
+            artifacts/windows-msi/*.msi \
+            artifacts/macos-app/*.zip \
+            artifacts/linux-appimage/*.AppImage \
+            --clobber
