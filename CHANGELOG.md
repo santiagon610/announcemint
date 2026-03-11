@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/santiagon610/announcemint/compare/v1.0.2...v1.0.3) (2026-03-11)
+
+
+### Bug Fixes
+
+* **ci:** release process ([#9](https://github.com/santiagon610/announcemint/issues/9)) ([6dad478](https://github.com/santiagon610/announcemint/commit/6dad478ff5b1d94dd0eb9a7acf69b39ad6072f35))
+
 ## [1.0.2](https://github.com/santiagon610/announcemint/compare/v1.0.1...v1.0.2) (2026-03-09)
 
 
