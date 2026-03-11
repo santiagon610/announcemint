@@ -26,6 +26,8 @@ jobs:
       - name: Release Please
         uses: googleapis/release-please-action@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # Use a PAT (e.g. secrets.RELEASE_PLEASE_TOKEN) so that release:published fires
+          # and the Release Assets workflow can run. GITHUB_TOKEN does not trigger it.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
