@@ -1,131 +1,32 @@
-# Build installers and attach them to the GitHub Release created by Release Please.
-# Triggers on:
-# - release:published — when Release Please creates a release (requires PAT in release-please.yml)
-# - push (tags v*) — when a version tag is pushed manually (e.g. git push origin v1.0.0)
+# Build installers and attach them to the GitHub Release.
+# Triggers on release:published only (Release Please or UI). Using both
+# release:published and push tags would run twice when Release Please publishes.
+# Each platform is built on its native runner; see build-installers.yml.
 name: Release Assets
 
 on:
   release:
     types: [published]
-  push:
-    tags:
-      - 'v*'
 
 permissions:
   contents: write
 
-env:
-  # Tag to build and attach: from release event (Release Please) or from push (manual tag)
-  RELEASE_TAG: ${{ github.event.release.tag_name || github.ref_name }}
-
 jobs:
-  build-windows:
-    name: Build Windows MSI
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: refs/tags/${{ env.RELEASE_TAG }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: 'src-tauri'
-
-      - run: npm ci
-      - run: npm run tauri build -- --bundles msi --ci --no-sign
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ""
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: windows-msi
-          path: src-tauri/target/release/bundle/msi/*.msi
-
-  build-macos:
-    name: Build macOS app
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: refs/tags/${{ env.RELEASE_TAG }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: 'src-tauri'
-
-      - run: npm ci
-      - run: npm run tauri build -- --bundles app --ci --no-sign
-
-      - name: Zip macOS app bundle
-        run: |
-          cd src-tauri/target/release/bundle/macos
-          zip -r Announcemint-macos.zip *.app
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: macos-app
-          path: src-tauri/target/release/bundle/macos/*.zip
-
-  build-linux:
-    name: Build Linux AppImage
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: refs/tags/${{ env.RELEASE_TAG }}
-
-      - run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf squashfs-tools
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: 'src-tauri'
-
-      - run: npm ci
-      - run: npm run tauri build -- --bundles appimage --ci
-        env:
-          APPIMAGE_EXTRACT_AND_RUN: 1
-
-      - name: Repack AppImage with gzip for AppImageLauncher
-        run: |
-          chmod +x scripts/repack-appimage-gzip.sh
-          for f in src-tauri/target/release/bundle/appimage/*.AppImage; do
-            ./scripts/repack-appimage-gzip.sh "$f"
-          done
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: linux-appimage
-          path: src-tauri/target/release/bundle/appimage/*.AppImage
+  build-installers:
+    name: Build installers
+    uses: ./.github/workflows/build-installers.yml
+    with:
+      ref: refs/tags/${{ github.event.release.tag_name }}
+    secrets: inherit
 
   upload-release-assets:
     name: Upload assets to release
     runs-on: ubuntu-latest
-    needs: [build-windows, build-macos, build-linux]
+    needs: build-installers
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: refs/tags/${{ env.RELEASE_TAG }}
+          ref: refs/tags/${{ github.event.release.tag_name }}
           fetch-depth: 0
 
       - uses: actions/download-artifact@v4
@@ -136,7 +37,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ env.RELEASE_TAG }}" \
+          gh release upload "${{ github.event.release.tag_name }}" \
             artifacts/windows-msi/*.msi \
             artifacts/macos-app/*.zip \
             artifacts/linux-appimage/*.AppImage \

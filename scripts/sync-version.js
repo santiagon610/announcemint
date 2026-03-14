@@ -23,14 +23,15 @@ const tauriConf = JSON.parse(readFileSync(tauriConfPath, "utf8"));
 tauriConf.version = version;
 writeFileSync(tauriConfPath, JSON.stringify(tauriConf, null, 2) + "\n");
 
-// Cargo.toml: replace the first version = "..." (in [package] section only)
+// Cargo.toml: replace the first version = "..." (in [package] section only).
+// Preserve any trailing comment (e.g. # x-release-please-version for Release Please).
 const cargoContent = readFileSync(cargoPath, "utf8");
 if (!/(^|\n)\s*version\s*=\s*"[^"]*"/.test(cargoContent)) {
   throw new Error("Could not find version line in src-tauri/Cargo.toml");
 }
 const newCargoContent = cargoContent.replace(
-  /(^|\n)(\s*version\s*=\s*)"[^"]*"/,
-  '$1$2"' + version + '"'
+  /(^|\n)(\s*version\s*=\s*)"[^"]*"([^\n]*)/,
+  '$1$2"' + version + '"$3'
 );
 writeFileSync(cargoPath, newCargoContent);
 

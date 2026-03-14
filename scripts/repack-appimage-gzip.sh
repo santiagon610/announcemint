@@ -46,6 +46,17 @@ fi
 # Extract runtime (bytes before payload)
 head -c "$OFFSET" input.AppImage > runtime
 
+# Set WebKit to use CPU rendering so EGL is never used (avoids EGL_BAD_PARAMETER crash on some setups).
+# Must be set before the app binary runs, so we patch AppRun here; setting it in Rust main() is too late.
+# Only patch if AppRun is a script (starts with #!); do not modify binary AppRun.
+if [ -f squashfs-root/AppRun ] && head -c 2 squashfs-root/AppRun | grep -q '^#!'; then
+  (echo "$(head -n 1 squashfs-root/AppRun)"
+   echo 'export WEBKIT_SKIA_ENABLE_CPU_RENDERING=1'
+   tail -n +2 squashfs-root/AppRun) > squashfs-root/AppRun.new
+  mv squashfs-root/AppRun.new squashfs-root/AppRun
+  chmod +x squashfs-root/AppRun
+fi
+
 # Repack extracted squashfs-root with gzip for AppImageLauncher compatibility
 mksquashfs squashfs-root new.sqfs -comp gzip -noappend
 

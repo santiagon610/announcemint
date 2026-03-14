@@ -1,0 +1,111 @@
+# Reusable workflow: build Windows MSI, macOS .app, and Linux AppImage.
+# Each platform requires its native runner (WiX is Windows-only; macOS SDK is macOS-only).
+# Call from CI (for PR/artifact uploads) or from Release Assets (for release upload).
+name: Build installers (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: "Git ref to build (branch, SHA, or tag)"
+        required: true
+        type: string
+
+jobs:
+  build-windows:
+    name: Build Windows MSI
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri"
+
+      - run: npm ci
+      - run: npm run tauri build -- --bundles msi --ci --no-sign
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ""
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-msi
+          path: src-tauri/target/release/bundle/msi/*.msi
+
+  build-macos:
+    name: Build macOS app
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri"
+
+      - run: npm ci
+      - run: npm run tauri build -- --bundles app --ci --no-sign
+
+      - name: Zip macOS app bundle
+        run: |
+          cd src-tauri/target/release/bundle/macos
+          zip -r Announcemint-macos.zip *.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: src-tauri/target/release/bundle/macos/*.zip
+
+  build-linux:
+    name: Build Linux AppImage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri"
+
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf squashfs-tools
+
+      - run: npm ci
+      - run: npm run tauri build -- --bundles appimage --ci
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+
+      - name: Repack AppImage with gzip for AppImageLauncher
+        run: |
+            chmod +x scripts/repack-appimage-gzip.sh
+            for f in src-tauri/target/release/bundle/appimage/*.AppImage; do
+              ./scripts/repack-appimage-gzip.sh "$f"
+            done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-appimage
+          path: src-tauri/target/release/bundle/appimage/*.AppImage
