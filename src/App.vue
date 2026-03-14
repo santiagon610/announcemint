@@ -69,6 +69,7 @@ const openDrawer = ref<"aws" | "voice" | "destination" | "dangerzone" | null>(
   null,
 );
 const openAwsSubdrawer = ref<"account" | "proxy" | null>(null);
+const loadingVoices = ref(false);
 const rememberPrompts = ref(true);
 const promptFileNameFormat = ref("hyphen");
 
@@ -171,6 +172,8 @@ async function checkSession() {
 }
 
 async function loadVoices() {
+  if (sessionOk.value !== true) return;
+  loadingVoices.value = true;
   try {
     voices.value = await invoke("polly_describe_voices", {
       languageCode: effectiveLanguageCode.value || null,
@@ -185,6 +188,8 @@ async function loadVoices() {
     }
   } catch (e) {
     console.error(e);
+  } finally {
+    loadingVoices.value = false;
   }
 }
 
@@ -234,6 +239,9 @@ async function checkCredentialsAndPermissions() {
       "check_credentials_and_permissions",
     );
     credentialsAndPermissionsResult.value = result;
+    if (result.authenticated) {
+      await checkSession();
+    }
   } catch (e) {
     credentialsAndPermissionsResult.value = {
       authenticated: false,
@@ -523,6 +531,13 @@ watch(
   },
 );
 
+// When AWS session becomes valid, refresh voices so the Voice dropdown is populated.
+watch(sessionOk, (newVal, oldVal) => {
+  if (newVal === true && oldVal === false) {
+    loadVoices();
+  }
+});
+
 /** Sync window theme after mount so app content follows dark/light. Runs in Vue lifecycle so it cannot block initial render. On Linux uses get_system_theme (XDG portal). */
 function minimizeWindow(): void {
   getCurrentWindow().minimize();
@@ -605,9 +620,9 @@ onMounted(async () => {
     console.error(e);
   }
   loadPresets();
-  loadConfig().then(() => {
+  loadConfig().then(async () => {
+    await checkSession();
     loadVoices();
-    checkSession();
     checkCredentialsAndPermissions();
   });
 });
@@ -1129,15 +1144,31 @@ onMounted(async () => {
           </div>
         </section>
 
-        <!-- Drawer 2: Voice Options -->
+        <!-- Drawer 2: Voice Options (requires valid AWS session for polly:DescribeVoices) -->
         <section class="drawer accordion-drawer">
           <button
             type="button"
             class="drawer-header"
+            :class="{ 'drawer-header-disabled': sessionOk !== true }"
+            :disabled="sessionOk !== true"
             :aria-expanded="openDrawer === 'voice'"
+            :title="
+              sessionOk !== true
+                ? 'Sign in to AWS to access voice options'
+                : undefined
+            "
             @click="openDrawer = openDrawer === 'voice' ? null : 'voice'"
           >
-            <h2 class="drawer-title">Voice Options</h2>
+            <h2 class="drawer-title">
+              Voice Options
+              <span
+                v-if="sessionOk !== true"
+                class="drawer-title-hint"
+                aria-hidden="true"
+              >
+                (requires AWS session)
+              </span>
+            </h2>
             <span
               class="drawer-chevron"
               :class="{ open: openDrawer === 'voice' }"
@@ -1173,6 +1204,16 @@ onMounted(async () => {
                     {{ v.name }} ({{ v.language_code }})
                   </option>
                 </select>
+              </div>
+              <div class="form-row">
+                <button
+                  type="button"
+                  class="btn-secondary"
+                  :disabled="loadingVoices || sessionOk !== true"
+                  @click="loadVoices"
+                >
+                  {{ loadingVoices ? "Refreshing…" : "Refresh voices" }}
+                </button>
               </div>
               <div class="form-row">
                 <label>Output preset</label>
@@ -1401,12 +1442,21 @@ onMounted(async () => {
   color: inherit;
   text-align: left;
 }
-.drawer-header:hover {
+.drawer-header:hover:not(:disabled) {
   background: var(--color-bg);
+}
+.drawer-header:disabled,
+.drawer-header-disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 .drawer-header .drawer-title {
   margin: 0;
   flex: 1;
+}
+.drawer-title-hint {
+  font-weight: normal;
+  opacity: 0.85;
 }
 .drawer-chevron {
   font-size: 0.75rem;
