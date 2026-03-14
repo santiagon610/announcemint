@@ -1,6 +1,6 @@
 [package]
 name = "announcemint"
-version = "1.0.6"
+version = "1.0.6" # x-release-please-version
 description = "Text-to-speech via AWS Polly with preset-based output"
 authors = ["Announcemint"]
 license = "GPL-3.0"

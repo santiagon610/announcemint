@@ -1,3 +1,6 @@
+# Continuous Integration: lint, test, and optional installer builds.
+# Installer builds require native runners: Windows (MSI/WiX), macOS (.app), Linux (AppImage).
+# They cannot all run on Linux; see .github/workflows/build-installers.yml.
 name: Continuous Integration
 
 concurrency:
@@ -37,7 +40,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: 'src-tauri'
+          workspaces: "src-tauri"
 
       - name: Install Linux system dependencies
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
@@ -85,80 +88,11 @@ jobs:
             ci
             chore
 
-  build-windows:
-    name: Build app for Windows
-    runs-on: windows-latest
+  build-installers:
+    name: Build installers (Windows MSI, macOS app, Linux AppImage)
+    uses: ./.github/workflows/build-installers.yml
+    with:
+      ref: ${{ github.sha }}
     if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_installers == 'true')
     needs: lint-and-test
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: 'src-tauri'
-      - run: npm ci
-      - run: npm run tauri build -- --bundles msi --ci --no-sign
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ""
-      - uses: actions/upload-artifact@v4
-        with:
-          name: windows-msi-installer
-          path: src-tauri/target/release/bundle/msi/*.msi
-
-  build-macos:
-    name: Build app for macOS
-    runs-on: macos-latest
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_installers == 'true')
-    needs: lint-and-test
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: 'src-tauri'
-      - run: npm ci
-      - run: npm run tauri build -- --bundles app --ci --no-sign
-      - uses: actions/upload-artifact@v4
-        with:
-          name: macos-app-bundle
-          path: src-tauri/target/release/bundle/macos/*.app
-
-  build-linux:
-    name: Build app for Linux
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_installers == 'true')
-    needs: lint-and-test
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: 'src-tauri'
-      - run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf squashfs-tools
-      - run: npm ci
-      # CI has no FUSE; linuxdeploy is an AppImage and needs extract-and-run.
-      - run: npm run tauri build -- --bundles appimage --ci
-        env:
-          APPIMAGE_EXTRACT_AND_RUN: 1
-      - name: Repack AppImage with gzip for AppImageLauncher
-        run: |
-          chmod +x scripts/repack-appimage-gzip.sh
-          for f in src-tauri/target/release/bundle/appimage/*.AppImage; do
-            ./scripts/repack-appimage-gzip.sh "$f"
-          done
-      - uses: actions/upload-artifact@v4
-        with:
-          name: linux-appimage-installer
-          path: src-tauri/target/release/bundle/appimage/*.AppImage
+    secrets: inherit

@@ -5,7 +5,18 @@
     ".": {
       "changelog-path": "CHANGELOG.md",
       "release-type": "node",
-      "include-component-in-tag": false
+      "include-component-in-tag": false,
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "src-tauri/Cargo.toml"
+        },
+        {
+          "type": "json",
+          "path": "src-tauri/tauri.conf.json",
+          "jsonpath": "$.version"
+        }
+      ]
     }
   }
 }
