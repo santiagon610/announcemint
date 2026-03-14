@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6](https://github.com/santiagon610/announcemint/compare/v1.0.5...v1.0.6) (2026-03-14)
+
+
+### Bug Fixes
+
+* cpu rendering for webkit ([#15](https://github.com/santiagon610/announcemint/issues/15)) ([8def5e8](https://github.com/santiagon610/announcemint/commit/8def5e85cc01cc958b128d0e4c13ffd6d786a2f4))
+
 ## [1.0.5](https://github.com/santiagon610/announcemint/compare/v1.0.4...v1.0.5) (2026-03-11)
 
 
