@@ -18,13 +18,22 @@ gui:
 
 # Print Linux system packages required for the GUI (Fedora). See README for other distros and PKG_CONFIG_PATH.
 gui-deps:
-    @echo "On Fedora/RHEL, install WebKitGTK deps:"
-    @echo "  sudo dnf install webkit2gtk4.1-devel libsoup3-devel javascriptcoregtk4.1-devel"
-    @echo "If PKG_CONFIG_PATH is set by Homebrew, run: export PKG_CONFIG_PATH=\"/usr/lib64/pkgconfig:$$PKG_CONFIG_PATH\""
+    @echo "On Fedora/RHEL, install WebKitGTK + GLib/GTK + librsvg (for AppImage/linuxdeploy):"
+    @echo "  sudo dnf install glib2-devel webkit2gtk4.1-devel libsoup3-devel javascriptcoregtk4.1-devel librsvg2-devel"
+    @echo "If you use Homebrew on Linux, also: export PKG_CONFIG_PATH=\"/usr/lib64/pkgconfig:$$PKG_CONFIG_PATH\""
 
 gui-build-macos:
     cargo build --manifest-path src-tauri/Cargo.toml
     npm run tauri build -- --bundles app
+
+# Build Linux AppImage (gzip compression + EGL workaround via repack). Output: src-tauri/target/release/bundle/appimage/*.AppImage
+# APPIMAGE_EXTRACT_AND_RUN=1: linuxdeploy AppImage extract-and-run (avoids FUSE "failed to run linuxdeploy").
+# NO_STRIP=true: avoid strip failing on .relr.dyn (modern glibc) on Fedora/rolling distros.
+# --verbose: required on some hosts so linuxdeploy runs correctly (see tauri-apps/tauri#14796).
+appimage:
+    APPIMAGE_EXTRACT_AND_RUN=1 NO_STRIP=true npm run tauri build -- --bundles appimage --verbose
+    chmod +x scripts/repack-appimage-gzip.sh
+    sh -c 'for f in src-tauri/target/release/bundle/appimage/*.AppImage; do ./scripts/repack-appimage-gzip.sh "$f"; done'
 
 # Run the CLI. Uses same config as GUI when present. Examples:
 #   just cli generate --output-dir ./out --text "Hello"

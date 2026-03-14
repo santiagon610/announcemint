@@ -58,9 +58,9 @@ The desktop app uses WebKitGTK. Install the development packages so `pkg-config`
 
 - **Fedora / RHEL**:
   ```bash
-  sudo dnf install webkit2gtk4.1-devel libsoup3-devel
+  sudo dnf install glib2-devel webkit2gtk4.1-devel libsoup3-devel librsvg2-devel
   ```
-  (On some Fedora versions you may need `javascriptcoregtk4.1-devel` if the above is not enough.)
+  (On some Fedora versions you may need `javascriptcoregtk4.1-devel` if the above is not enough. If you see `gio-2.0` or other GLib `.pc` not found, install `glib2-devel`. For AppImage builds, `librsvg2-devel` is required by the linuxdeploy GTK plugin.)
 
 - **Debian / Ubuntu**:
   ```bash
@@ -135,7 +135,7 @@ Optional: use the **Tauri Development** launch config in VS Code (Run and Debug)
 
 - **Windows (MSI)**: On Windows with WiX installed, `npm run tauri build` produces an MSI in `src-tauri/target/release/bundle/msi/`.
 - **macOS (.app)**: On macOS, `npm run tauri build` produces the app bundle (e.g. in `src-tauri/target/release/bundle/macos/`).
-- **Linux**: `npm run tauri build` produces .deb and AppImage. In environments without FUSE (e.g. Docker, CI), set `APPIMAGE_EXTRACT_AND_RUN=1` so the linuxdeploy AppImage can run. If you see “Squashfs image uses (null) compression” when launching via AppImageLauncher, run `./scripts/repack-appimage-gzip.sh path/to/foo.AppImage` or run the AppImage directly. Release builds are repacked with gzip so AppImageLauncher can read them. If you get "Could not create default EGL display: EGL_BAD_PARAMETER" and a blank window, the app automatically forces WebKit CPU rendering on Linux; to try GPU again set `WEBKIT_SKIA_ENABLE_CPU_RENDERING=0` before launching.
+- **Linux**: `npm run tauri build` produces .deb and AppImage. In environments without FUSE (e.g. Docker, CI), set `APPIMAGE_EXTRACT_AND_RUN=1` so the linuxdeploy AppImage can run. If you see “Squashfs image uses (null) compression” when launching via AppImageLauncher, run `./scripts/repack-appimage-gzip.sh path/to/foo.AppImage` or run the AppImage directly. Release builds are repacked with gzip so AppImageLauncher can read them. If you get "Could not create default EGL display: EGL_BAD_PARAMETER" and a blank window: the repack step (used in CI/releases) injects `WEBKIT_SKIA_ENABLE_CPU_RENDERING=1` into the AppImage’s AppRun so the variable is set before the app starts; the in-app fallback only helps when not using the AppImage. To try GPU, run with `WEBKIT_SKIA_ENABLE_CPU_RENDERING=0` before launching.
 
 ## Rebranding
 
