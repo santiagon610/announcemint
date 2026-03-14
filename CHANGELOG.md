@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.7](https://github.com/santiagon610/announcemint/compare/v1.0.6...v1.0.7) (2026-03-14)
+
+
+### Bug Fixes
+
+* appimage builds ([#17](https://github.com/santiagon610/announcemint/issues/17)) ([69e9124](https://github.com/santiagon610/announcemint/commit/69e9124b12f55b2791847a510ad805fac8418ed1))
+
 ## [1.0.6](https://github.com/santiagon610/announcemint/compare/v1.0.5...v1.0.6) (2026-03-14)
 
 
