@@ -594,6 +594,14 @@ async fn check_destination_paths(
 }
 
 fn main() {
+    // Avoid EGL_BAD_PARAMETER crash on Linux (e.g. AppImage on some Wayland/Mesa setups).
+    // WebKitGTK tries to create an EGL display; when that fails we get a blank white window and abort.
+    // Forcing CPU rendering avoids EGL entirely. Users can set WEBKIT_SKIA_ENABLE_CPU_RENDERING=0 to try GPU.
+    #[cfg(target_os = "linux")]
+    if std::env::var("WEBKIT_SKIA_ENABLE_CPU_RENDERING").is_err() {
+        std::env::set_var("WEBKIT_SKIA_ENABLE_CPU_RENDERING", "1");
+    }
+
     let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
     let ran_cli = rt.block_on(cli::run_cli());
     match ran_cli {
