@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Announcemint",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "identifier": "com.santiagon610.announcemint",
   "build": {
     "beforeDevCommand": "npm run sync-version && npm run sync-brand && node scripts/start-dev-and-wait.js",
