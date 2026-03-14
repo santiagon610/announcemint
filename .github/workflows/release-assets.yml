@@ -11,15 +11,12 @@ on:
 permissions:
   contents: write
 
-env:
-  RELEASE_TAG: ${{ github.event.release.tag_name }}
-
 jobs:
   build-installers:
     name: Build installers
     uses: ./.github/workflows/build-installers.yml
     with:
-      ref: refs/tags/${{ env.RELEASE_TAG }}
+      ref: refs/tags/${{ github.event.release.tag_name }}
     secrets: inherit
 
   upload-release-assets:
@@ -29,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: refs/tags/${{ env.RELEASE_TAG }}
+          ref: refs/tags/${{ github.event.release.tag_name }}
           fetch-depth: 0
 
       - uses: actions/download-artifact@v4
@@ -40,7 +37,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ env.RELEASE_TAG }}" \
+          gh release upload "${{ github.event.release.tag_name }}" \
             artifacts/windows-msi/*.msi \
             artifacts/macos-app/*.zip \
             artifacts/linux-appimage/*.AppImage \
