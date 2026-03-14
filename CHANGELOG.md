@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/santiagon610/announcemint/compare/v1.0.7...v1.1.0) (2026-03-14)
+
+
+### Features
+
+* improve voice options ux ([#19](https://github.com/santiagon610/announcemint/issues/19)) ([735d204](https://github.com/santiagon610/announcemint/commit/735d2041d38752daad2d33bdf5ecb445d9c9a6dd))
+
 ## [1.0.7](https://github.com/santiagon610/announcemint/compare/v1.0.6...v1.0.7) (2026-03-14)
 
 
