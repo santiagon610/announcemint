@@ -6,7 +6,13 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open, confirm } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { relaunch } from "@tauri-apps/plugin-process";
-import { APP_NAME, GITHUB_REPO, HELP_DOCS_URL } from "./app-config";
+import {
+  APP_NAME,
+  GITHUB_REPO,
+  HELP_DOCS_URL,
+  SHOW_HELP,
+  SHOW_ABOUT,
+} from "./app-config";
 
 const outputDir = ref<string | null>(null);
 const presetName = ref("OGG Vorbis");
@@ -116,6 +122,19 @@ const linesList = computed(() =>
 );
 const totalLines = computed(() => linesList.value.length);
 
+/** Reasons the Generate button is disabled; shown as a hint when not generating. */
+const generateButtonBlockers = computed(() => {
+  const blockers: string[] = [];
+  if (sessionOk.value !== true)
+    blockers.push("Sign in to AWS (Settings → Connecting to AWS)");
+  if (!outputDir.value)
+    blockers.push("Select an output directory (Settings → Saving Prompts)");
+  if (totalLines.value === 0) blockers.push("Enter at least one prompt");
+  if (!voiceId.value)
+    blockers.push("Select a voice (Settings → Voice Options)");
+  return blockers;
+});
+
 function getSystemLanguageCode(): string {
   const locale =
     typeof navigator !== "undefined" ? navigator.language : "en-US";
@@ -180,7 +199,8 @@ async function loadVoices() {
       engine: engine.value || null,
     });
     if (voices.value.length) {
-      const currentInList = voiceId.value && voices.value.some((v) => v.id === voiceId.value);
+      const currentInList =
+        voiceId.value && voices.value.some((v) => v.id === voiceId.value);
       if (!currentInList) {
         voiceId.value = voices.value[0].id;
       }
@@ -537,6 +557,12 @@ watch(sessionOk, (newVal, oldVal) => {
   }
 });
 
+/** When returning from Settings to main, re-check session so newly configured credentials are detected and the Generate button can enable. */
+async function returnToMain(): Promise<void> {
+  await checkSession();
+  currentView.value = "main";
+}
+
 /** Sync window theme after mount so app content follows dark/light. Runs in Vue lifecycle so it cannot block initial render. On Linux uses get_system_theme (XDG portal). */
 function minimizeWindow(): void {
   getCurrentWindow().minimize();
@@ -724,6 +750,7 @@ onMounted(async () => {
             }}
           </span>
           <button
+            v-if="SHOW_HELP"
             type="button"
             class="btn-secondary"
             @click="openUrl(HELP_DOCS_URL).catch(console.error)"
@@ -754,11 +781,23 @@ onMounted(async () => {
           <button
             type="button"
             class="btn-primary"
-            :disabled="generating || sessionOk !== true || !outputDir || totalLines === 0 || !voiceId"
+            :disabled="
+              generating ||
+              sessionOk !== true ||
+              !outputDir ||
+              totalLines === 0 ||
+              !voiceId
+            "
             @click="generate"
           >
             {{ generating ? "Generating…" : "Generate Prompts" }}
           </button>
+          <p
+            v-if="!generating && generateButtonBlockers.length"
+            class="generate-hint"
+          >
+            To enable: {{ generateButtonBlockers.join("; ") }}.
+          </p>
         </div>
         <div v-if="progress" class="progress-panel">
           <p v-if="progressPromptName" class="progress-prompt-name">
@@ -784,7 +823,7 @@ onMounted(async () => {
         <p v-if="error" class="error">{{ error }}</p>
       </main>
 
-      <footer class="footer">
+      <footer v-if="SHOW_ABOUT" class="footer">
         <button type="button" class="footer-link" @click="showAbout = true">
           About
         </button>
@@ -795,7 +834,7 @@ onMounted(async () => {
     <template v-if="currentView === 'settings'">
       <header class="header settings-header">
         <h1 class="settings-title">Settings</h1>
-        <button type="button" class="btn-primary" @click="currentView = 'main'">
+        <button type="button" class="btn-primary" @click="returnToMain">
           Return
         </button>
       </header>
@@ -1320,8 +1359,9 @@ onMounted(async () => {
       </div>
     </template>
 
-    <!-- About modal (global) -->
+    <!-- About modal (global); only rendered when About feature is enabled -->
     <div
+      v-if="SHOW_ABOUT"
       v-show="showAbout"
       class="about-overlay"
       role="dialog"
@@ -1702,6 +1742,11 @@ onMounted(async () => {
 .error {
   color: var(--color-error);
   font-size: 0.875rem;
+}
+.generate-hint {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
 }
 .session-hint {
   margin-top: 0.75rem;

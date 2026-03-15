@@ -6,7 +6,8 @@ name: Release Assets
 
 on:
   release:
-    types: [published]
+    types:
+      - published
 
 permissions:
   contents: write
@@ -39,6 +40,7 @@ jobs:
         run: |
           gh release upload "${{ github.event.release.tag_name }}" \
             artifacts/windows-msi/*.msi \
+            artifacts/windows-nsis/*.exe \
             artifacts/macos-app/*.zip \
             artifacts/linux-appimage/*.AppImage \
             --clobber
