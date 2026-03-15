@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/santiagon610/announcemint/compare/v1.1.2...v1.2.0) (2026-03-15)
+
+
+### Features
+
+* add descriptive hint ([#25](https://github.com/santiagon610/announcemint/issues/25)) ([6c1e5b9](https://github.com/santiagon610/announcemint/commit/6c1e5b98013d06387c654ca414d2857e61fe8d8a))
+
 ## [1.1.2](https://github.com/santiagon610/announcemint/compare/v1.1.1...v1.1.2) (2026-03-15)
 
 
