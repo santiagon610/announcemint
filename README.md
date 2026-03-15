@@ -6,7 +6,7 @@ App name, publisher, docs URL, and GitHub repo are set in **`brand.json`** at th
 
 ### Getting the app
 
-Prebuilt installers (Windows MSI, macOS .app, Linux AppImage) are published on the [Releases](https://github.com/hlvtechnologies/announcemint/releases) page. You need [AWS credentials](#requirements) with Polly permissions before generating speech.
+Prebuilt installers (Windows MSI and NSIS .exe, macOS .app, Linux AppImage) are published on the [Releases](https://github.com/hlvtechnologies/announcemint/releases) page. On Windows, the **NSIS** installer (`.exe`) lets you choose **per-user** or **system-wide** install; the MSI installs per-machine. You need [AWS credentials](#requirements) with Polly permissions before generating speech.
 
 ## Features
 
@@ -133,7 +133,7 @@ Optional: use the **Tauri Development** launch config in VS Code (Run and Debug)
 
 ## Build
 
-- **Windows (MSI)**: On Windows with WiX installed, `npm run tauri build` produces an MSI in `src-tauri/target/release/bundle/msi/`.
+- **Windows**: On Windows with WiX and NSIS installed, `npm run tauri build -- --bundles msi,nsis` produces an MSI in `src-tauri/target/release/bundle/msi/` and an NSIS `.exe` in `src-tauri/target/release/bundle/nsis/`. The NSIS installer prompts for **per-user** or **per-machine** install (see `bundle.windows.nsis.installMode: "both"` in `tauri.conf.json`).
 - **macOS (.app)**: On macOS, `npm run tauri build` produces the app bundle (e.g. in `src-tauri/target/release/bundle/macos/`).
 - **Linux**: `npm run tauri build` produces .deb and AppImage. In environments without FUSE (e.g. Docker, CI), set `APPIMAGE_EXTRACT_AND_RUN=1` so the linuxdeploy AppImage can run. If you see “Squashfs image uses (null) compression” when launching via AppImageLauncher, run `./scripts/repack-appimage-gzip.sh path/to/foo.AppImage` or run the AppImage directly. Release builds are repacked with gzip so AppImageLauncher can read them. If you get "Could not create default EGL display: EGL_BAD_PARAMETER" and a blank window (e.g. on Fedora with some GPUs): run with `WEBKIT_SKIA_ENABLE_CPU_RENDERING=1 ./Announcemint_*.AppImage` to force CPU rendering. Release builds use a repack step that injects this into the AppImage’s AppRun (script or binary), so newer builds should avoid the crash; to try GPU again use `WEBKIT_SKIA_ENABLE_CPU_RENDERING=0` before launching.
 

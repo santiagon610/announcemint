@@ -44,7 +44,10 @@
         "type": "downloadBootstrapper",
         "silent": true
       },
-      "allowDowngrades": false
+      "allowDowngrades": false,
+      "nsis": {
+        "installMode": "both"
+      }
     },
     "android": {
       "minSdkVersion": 24,
