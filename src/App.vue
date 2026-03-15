@@ -6,7 +6,13 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open, confirm } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { relaunch } from "@tauri-apps/plugin-process";
-import { APP_NAME, GITHUB_REPO, HELP_DOCS_URL, SHOW_HELP, SHOW_ABOUT } from "./app-config";
+import {
+  APP_NAME,
+  GITHUB_REPO,
+  HELP_DOCS_URL,
+  SHOW_HELP,
+  SHOW_ABOUT,
+} from "./app-config";
 
 const outputDir = ref<string | null>(null);
 const presetName = ref("OGG Vorbis");
@@ -193,7 +199,8 @@ async function loadVoices() {
       engine: engine.value || null,
     });
     if (voices.value.length) {
-      const currentInList = voiceId.value && voices.value.some((v) => v.id === voiceId.value);
+      const currentInList =
+        voiceId.value && voices.value.some((v) => v.id === voiceId.value);
       if (!currentInList) {
         voiceId.value = voices.value[0].id;
       }
@@ -774,12 +781,21 @@ onMounted(async () => {
           <button
             type="button"
             class="btn-primary"
-            :disabled="generating || sessionOk !== true || !outputDir || totalLines === 0 || !voiceId"
+            :disabled="
+              generating ||
+              sessionOk !== true ||
+              !outputDir ||
+              totalLines === 0 ||
+              !voiceId
+            "
             @click="generate"
           >
             {{ generating ? "Generating…" : "Generate Prompts" }}
           </button>
-          <p v-if="!generating && generateButtonBlockers.length" class="generate-hint">
+          <p
+            v-if="!generating && generateButtonBlockers.length"
+            class="generate-hint"
+          >
             To enable: {{ generateButtonBlockers.join("; ") }}.
           </p>
         </div>
