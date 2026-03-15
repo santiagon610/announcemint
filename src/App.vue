@@ -179,12 +179,11 @@ async function loadVoices() {
       languageCode: effectiveLanguageCode.value || null,
       engine: engine.value || null,
     });
-    if (
-      voiceId.value &&
-      voices.value.length &&
-      !voices.value.some((v) => v.id === voiceId.value)
-    ) {
-      voiceId.value = voices.value[0].id;
+    if (voices.value.length) {
+      const currentInList = voiceId.value && voices.value.some((v) => v.id === voiceId.value);
+      if (!currentInList) {
+        voiceId.value = voices.value[0].id;
+      }
     }
   } catch (e) {
     console.error(e);
@@ -755,7 +754,7 @@ onMounted(async () => {
           <button
             type="button"
             class="btn-primary"
-            :disabled="generating || !outputDir || totalLines === 0 || !voiceId"
+            :disabled="generating || sessionOk !== true || !outputDir || totalLines === 0 || !voiceId"
             @click="generate"
           >
             {{ generating ? "Generating…" : "Generate Prompts" }}
