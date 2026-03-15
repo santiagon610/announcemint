@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/santiagon610/announcemint/compare/v1.1.0...v1.1.1) (2026-03-15)
+
+
+### Bug Fixes
+
+* **ci:** add egl and gzip workaround ([#21](https://github.com/santiagon610/announcemint/issues/21)) ([381d383](https://github.com/santiagon610/announcemint/commit/381d38394992cdf9ee487b884586ca90304d1d70))
+
 ## [1.1.0](https://github.com/santiagon610/announcemint/compare/v1.0.7...v1.1.0) (2026-03-14)
 
 
