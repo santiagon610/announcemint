@@ -48,13 +48,24 @@ head -c "$OFFSET" input.AppImage > runtime
 
 # Set WebKit to use CPU rendering so EGL is never used (avoids EGL_BAD_PARAMETER crash on some setups).
 # Must be set before the app binary runs, so we patch AppRun here; setting it in Rust main() is too late.
-# Only patch if AppRun is a script (starts with #!); do not modify binary AppRun.
-if [ -f squashfs-root/AppRun ] && head -c 2 squashfs-root/AppRun | grep -q '^#!'; then
-  (echo "$(head -n 1 squashfs-root/AppRun)"
-   echo 'export WEBKIT_SKIA_ENABLE_CPU_RENDERING=1'
-   tail -n +2 squashfs-root/AppRun) > squashfs-root/AppRun.new
-  mv squashfs-root/AppRun.new squashfs-root/AppRun
-  chmod +x squashfs-root/AppRun
+if [ -f squashfs-root/AppRun ]; then
+  if head -c 2 squashfs-root/AppRun | grep -q '^#!'; then
+    # AppRun is a script: inject export after shebang.
+    (echo "$(head -n 1 squashfs-root/AppRun)"
+     echo 'export WEBKIT_SKIA_ENABLE_CPU_RENDERING=1'
+     tail -n +2 squashfs-root/AppRun) > squashfs-root/AppRun.new
+    mv squashfs-root/AppRun.new squashfs-root/AppRun
+    chmod +x squashfs-root/AppRun
+  else
+    # AppRun is a binary: wrap it in a script that sets the var then execs the binary.
+    mv squashfs-root/AppRun squashfs-root/AppRun.bin
+    cat > squashfs-root/AppRun << 'WRAPPER_EOF'
+#!/usr/bin/env bash
+export WEBKIT_SKIA_ENABLE_CPU_RENDERING=1
+exec "$(dirname "$0")/AppRun.bin" "$@"
+WRAPPER_EOF
+    chmod +x squashfs-root/AppRun
+  fi
 fi
 
 # Repack extracted squashfs-root with gzip for AppImageLauncher compatibility
