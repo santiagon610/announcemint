@@ -27,9 +27,6 @@ if (tauriConf.bundle) {
   if (brand.shortDescription) tauriConf.bundle.shortDescription = brand.shortDescription;
   if (brand.longDescription) tauriConf.bundle.longDescription = brand.longDescription;
 }
-if (tauriConf.plugins?.cli) {
-  tauriConf.plugins.cli.description = `${brand.appName} – AWS Polly text-to-speech`;
-}
 writeFileSync(tauriConfPath, JSON.stringify(tauriConf, null, 2) + "\n");
 
 // Capabilities: set opener allow URLs for docs from brand.docsUrl

@@ -13,7 +13,6 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = [] }
-tauri-plugin-cli = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-opener = "2"
@@ -32,7 +31,6 @@ tokio = { version = "1", features = ["fs", "io-util"] }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 urlencoding = "2"
 bytes = "1"
-clap = { version = "4", features = ["env", "derive"] }
 lewton = "0.10"
 rubato = "0.14"
 hound = "3.5"

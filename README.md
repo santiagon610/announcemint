@@ -109,7 +109,6 @@ Then you can run `just gui` or the commands below.
 ### Daily workflow
 
 - **GUI**: `just gui` or `npm run tauri dev` (Rust is built first so the window opens when the backend is ready).
-- **CLI**: `just cli generate --output-dir ./out --text "Hello"` or `just cli generate --output-dir ./out --file prompts.txt`.
 - **Tests**: `just test` or `cargo test --manifest-path src-tauri/Cargo.toml`.
 
 Optional: use the **Tauri Development** launch config in VS Code (Run and Debug) to run the GUI.
@@ -147,9 +146,9 @@ Edit **`brand.json`** at the project root:
 - **`githubRepo`** – URL for the GitHub link on the About screen.
 - **`shortDescription`** / **`longDescription`** – Bundle metadata (e.g. for installers).
 
-Then run **`npm run sync-brand`** to update `src-tauri/tauri.conf.json` (product name, window title, identifier, CLI description) and `src-tauri/capabilities/default.json` (docs URL allow list). The build and dev commands run `sync-brand` automatically. Rebuild the app so the Rust backend picks up the new publisher/app name for the config directory.
+Then run **`npm run sync-brand`** to update `src-tauri/tauri.conf.json` (product name, window title, identifier) and `src-tauri/capabilities/default.json` (docs URL allow list). The build and dev commands run `sync-brand` automatically. Rebuild the app so the Rust backend picks up the new publisher/app name for the config directory.
 
-Optionally update **`package.json`** `name` and the CLI binary name in `src-tauri/src/cli.rs` if you want the npm package and CLI command to match your brand.
+Optionally update **`package.json`** `name` if you want the npm package to match your brand.
 
 ## License
 
