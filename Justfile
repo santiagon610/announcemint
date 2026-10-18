@@ -35,24 +35,6 @@ appimage:
     chmod +x scripts/repack-appimage-gzip.sh
     sh -c 'for f in src-tauri/target/release/bundle/appimage/*.AppImage; do ./scripts/repack-appimage-gzip.sh "$f"; done'
 
-# Run the CLI. Uses same config as GUI when present. Examples:
-#   just cli generate --output-dir ./out --text "Hello"
-#   just cli generate --output-dir ./out --file prompts.txt --preset "WAV: Two-Way Radio Voice Prompt"
-#   just cli list-presets
-#   just cli list-voices
-#   just cli check-credentials
-#   just cli test-proxy
-cli *ARGS:
-    cargo run --manifest-path src-tauri/Cargo.toml -- {{ARGS}}
-
-# Build the CLI release binary (for faster repeated CLI runs)
-build-cli:
-    cargo build --release --manifest-path src-tauri/Cargo.toml
-
-# Run the release CLI binary (use after `just build-cli` for faster runs)
-cli-release *ARGS:
-    ./src-tauri/target/release/announcemint {{ARGS}}
-
 cleanup:
     rm -rfv dist/ node_modules/ package-lock.json
 

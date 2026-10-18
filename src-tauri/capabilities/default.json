@@ -12,7 +12,6 @@
     "core:window:allow-minimize",
     "core:window:allow-toggle-maximize",
     "core:window:allow-start-dragging",
-    "cli:default",
     "dialog:default",
     "fs:default",
     "process:default",

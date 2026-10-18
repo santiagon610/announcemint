@@ -3,7 +3,6 @@
 
 mod app_config;
 mod aws_config_file;
-mod cli;
 mod polly;
 mod preset;
 mod progress;
@@ -602,18 +601,7 @@ fn main() {
         std::env::set_var("WEBKIT_SKIA_ENABLE_CPU_RENDERING", "1");
     }
 
-    let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
-    let ran_cli = rt.block_on(cli::run_cli());
-    match ran_cli {
-        Ok(true) => return,
-        Ok(false) => {}
-        Err(e) => {
-            eprintln!("error: {}", e);
-            std::process::exit(1);
-        }
-    }
     tauri::Builder::default()
-        .plugin(tauri_plugin_cli::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
